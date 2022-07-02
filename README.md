@@ -11,7 +11,7 @@ This project exposes a single endpoint `/api/latest-tag` which require a `?repo=
 Example:
 
 ```sh
-$ curl -s <url>/api/latest-tag?repo=williamboman/vercel-github-api-latest-tag-proxy
+$ curl -s "<url>/api/latest-tag?repo=williamboman/vercel-github-api-latest-tag-proxy"
 {
   "tag": "v1.0.0"
 }
