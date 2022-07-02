@@ -20,5 +20,5 @@ $ curl -s <url>/api/latest-tag?repo=williamboman/vercel-github-api-latest-tag-pr
 ## Dev
 
 ```sh
-$ vercel dev
+$ GITHUB_API_KEY=XXX vercel dev
 ```
