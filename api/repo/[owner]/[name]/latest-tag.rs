@@ -1,3 +1,4 @@
+use core::str;
 use http::{
     header::{CACHE_CONTROL, CONTENT_TYPE},
     Method, StatusCode,
@@ -98,26 +99,48 @@ impl Display for Repo {
     }
 }
 
-impl FromStr for Repo {
-    type Err = VercelError;
+impl From<UriQueryParams> for Repo {
+    fn from(params: UriQueryParams) -> Self {
+        if let (Some(owner), Some(name)) = (
+            params.params.get("owner").and_then(|o| o.to_owned()),
+            params.params.get("name").and_then(|o| o.to_owned()),
+        ) {
+            return Self { owner, name };
+        }
+        panic!("Failed to parse repo from {:?}", params)
+    }
+}
+
+#[derive(Debug)]
+struct UriQueryParams {
+    params: HashMap<String, Option<String>>,
+}
+
+impl FromStr for UriQueryParams {
+    type Err = Box<dyn std::error::Error>;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if let Some((owner, name)) = s.split_once('/') {
-            Ok(Self {
-                owner: owner.to_owned(),
-                name: name.to_owned(),
-            })
-        } else {
-            Err(VercelError::new(
-                format!("Failed to parse repository {}.", s).as_str(),
-            ))
+        let mut params: HashMap<String, Option<String>> = HashMap::new();
+        for part in s.split("&") {
+            let mut param = part.splitn(2, "=");
+            let key = param.next().expect("Failed to get UriQueryParams key.");
+            let value = param.next();
+            params.insert(key.to_owned(), value.map(ToOwned::to_owned));
         }
+        return Ok(UriQueryParams { params });
     }
 }
 
 fn handler(request: Request) -> Result<impl IntoResponse, VercelError> {
     let api_key: String =
         std::env::var("GITHUB_API_KEY").expect("No GITHUB_API_KEY environment variable.");
+
+    let query_params: UriQueryParams = request
+        .uri()
+        .query()
+        .expect("No query parameters.")
+        .parse()
+        .unwrap_or_else(|_| panic!("Failed to parse query parameters."));
 
     if request.method() != Method::GET {
         return Ok(Response::builder()
@@ -126,21 +149,7 @@ fn handler(request: Request) -> Result<impl IntoResponse, VercelError> {
             .expect(""));
     }
 
-    let params: HashMap<String, String> = request
-        .uri()
-        .query()
-        .map(|v| {
-            url::form_urlencoded::parse(v.as_bytes())
-                .into_owned()
-                .collect()
-        })
-        .unwrap_or_else(HashMap::new);
-
-    let repo: Repo = params
-        .get("repo")
-        .ok_or_else(|| VercelError::new("No repo provided."))?
-        .parse()
-        .expect("Failed to parse repo.");
+    let repo: Repo = query_params.into();
 
     let request = GraphQLRequest {
         query: LATEST_TAG_QUERY.to_owned(),

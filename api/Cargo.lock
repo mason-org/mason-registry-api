@@ -550,7 +550,6 @@ dependencies = [
  "reqwest",
  "serde",
  "serde_json",
- "url",
  "vercel_lambda",
 ]
 
