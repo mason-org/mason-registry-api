@@ -1,4 +1,3 @@
-use core::str;
 use http::{
     header::{CACHE_CONTROL, CONTENT_TYPE},
     Method, StatusCode,
