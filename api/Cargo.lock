@@ -356,6 +356,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "78cc372d058dcf6d5ecd98510e7fbc9e5aec4d21de70f65fea8fecebcd881bd4"
 
 [[package]]
+name = "github-api-proxy"
+version = "1.0.0"
+dependencies = [
+ "http 0.1.21",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "vercel_lambda",
+]
+
+[[package]]
 name = "h2"
 version = "0.1.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -540,17 +551,6 @@ dependencies = [
  "matches",
  "unicode-bidi",
  "unicode-normalization",
-]
-
-[[package]]
-name = "index"
-version = "1.0.0"
-dependencies = [
- "http 0.1.21",
- "reqwest",
- "serde",
- "serde_json",
- "vercel_lambda",
 ]
 
 [[package]]

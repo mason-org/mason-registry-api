@@ -1,5 +1,5 @@
 [package]
-name = "index"
+name = "github-api-proxy"
 version = "1.0.0"
 authors = [ "William Boman <william@redwill.se>" ]
 edition = "2018"
@@ -19,4 +19,4 @@ features = [ "blocking", "json" ]
 
 [[bin]]
 name = "latest-tag"
-path = "/Users/williamboman/Developer/github/github-api-latest-tag-proxy/api/repo/[owner]/[name]/latest-tag.rs"
+path = "repo/[owner]/[name]/latest-tag.rs"

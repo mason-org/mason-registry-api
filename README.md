@@ -1,24 +1,26 @@
-# vercel-github-api-latest-tag-proxy
+# vercel-github-api-proxy
 
-Proxy for GitHub's API that returns the latest tag (by commit date) of a given repository.
-This is information that is only queryable via GitHub's GraphQL API, for which you need to be authenticated to use.
-This proxy API allows for looking up the latest tag, with no authentication required.
+Proxy for GitHub's API that exposes convenience APIs for tasks that are either
+complicated to achieve manually or are very "hot" (i.e. many requests being
+made).
 
 ## Usage
 
-This project exposes a single endpoint `/api/latest-tag` which require a `?repo=` query parameter. If the provided repository doesn't have any tags, or if the proxied request fail for any other reason, a 5xx response will currently be produced.
+- `/api/repo/{repo}/latest-tag`
+
+Returns the latest tag (ordered by commit date) of the provided `{repo}`.
 
 Example:
 
-```sh
-$ curl -s "<url>/api/latest-tag?repo=williamboman/vercel-github-api-latest-tag-proxy"
+```
+GET /api/repo/sumneko/vscode-lua/latest-tag
 {
-  "tag": "v1.0.0"
+  "tag": "v3.5.6"
 }
 ```
 
 ## Dev
 
 ```sh
-$ GITHUB_API_KEY=XXX vercel dev
+GITHUB_API_KEY=XXX vercel dev
 ```
