@@ -1,7 +1,4 @@
-use github_api_proxy::{
-    get_query_params,
-    github::{client::GitHubClient, GitHubRepo},
-};
+use github_api_proxy::github::{client::GitHubClient, GitHubRepo};
 use http::{Method, StatusCode};
 use std::{convert::TryInto, error::Error};
 
@@ -17,11 +14,14 @@ fn handler(request: Request) -> Result<impl IntoResponse, VercelError> {
             .body(Body::Empty)?);
     }
 
-    let query_params = get_query_params(&request)?;
+    let query_params = github_api_proxy::get_query_params(&request)?;
     let repo: GitHubRepo = (&query_params).try_into()?;
+
     let client = GitHubClient::new(api_key);
 
-    github_api_proxy::api::json(client.fetch_latest_tag(&repo)?)
+    github_api_proxy::api::json(
+        client.fetch_latest_release(&repo, query_params.has_flag("include_prerelease"))?,
+    )
 }
 
 // Start the runtime with the handler

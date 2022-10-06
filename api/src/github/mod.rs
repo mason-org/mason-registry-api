@@ -18,10 +18,10 @@ impl Display for GitHubRepo {
     }
 }
 
-impl TryFrom<UriQueryParams> for GitHubRepo {
+impl TryFrom<&UriQueryParams> for GitHubRepo {
     type Error = VercelError;
 
-    fn try_from(params: UriQueryParams) -> Result<Self, Self::Error> {
+    fn try_from(params: &UriQueryParams) -> Result<Self, Self::Error> {
         if let (Some(owner), Some(name)) = (
             params.params.get("owner").and_then(|o| o.to_owned()),
             params.params.get("name").and_then(|o| o.to_owned()),

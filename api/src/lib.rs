@@ -3,10 +3,30 @@ use std::{collections::HashMap, str::FromStr};
 use vercel_lambda::error::VercelError;
 
 pub mod github;
+pub mod api;
 
 #[derive(Debug)]
 pub struct UriQueryParams {
-    pub params: HashMap<String, Option<String>>,
+    params: HashMap<String, Option<String>>,
+}
+
+impl UriQueryParams {
+    pub fn get<T>(&self, key: T) -> &Option<String>
+    where
+        T: AsRef<str>,
+    {
+        self.params.get(key.as_ref()).unwrap_or(&None)
+    }
+
+    pub fn has_flag<T>(&self, key: T) -> bool
+    where
+        T: AsRef<str>,
+    {
+        match self.get(key).as_deref() {
+            Some("1") | Some("true") => true,
+            _ => false,
+        }
+    }
 }
 
 impl FromStr for UriQueryParams {
