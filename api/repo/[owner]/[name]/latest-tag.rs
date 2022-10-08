@@ -1,4 +1,4 @@
-use github_api_proxy::{
+use mason_registry_api::{
     get_query_params,
     github::{client::GitHubClient, GitHubRepo},
 };
@@ -21,7 +21,7 @@ fn handler(request: Request) -> Result<impl IntoResponse, VercelError> {
     let repo: GitHubRepo = (&query_params).try_into()?;
     let client = GitHubClient::new(api_key);
 
-    github_api_proxy::api::json(client.fetch_latest_tag(&repo)?)
+    mason_registry_api::api::json(client.fetch_latest_tag(&repo)?)
 }
 
 // Start the runtime with the handler
