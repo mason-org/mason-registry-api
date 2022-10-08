@@ -64,7 +64,7 @@ impl GitHubClient {
         );
         headers.insert(
             USER_AGENT,
-            "github-api-proxy (+https://github.com/williamboman/github-api-proxy)"
+            "mason-registry-api (+https://github.com/williamboman/mason-registry-api)"
                 .parse()
                 .unwrap(),
         );

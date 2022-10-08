@@ -1,8 +1,9 @@
-# github-api-proxy
+# mason-registry-api
 
-Proxy for GitHub's API that exposes convenience APIs for tasks that are either
-complicated to achieve manually or are very "hot" (i.e. many requests being
-made).
+Public edge-cached API for
+[mason.nvim](https://github.com/williamboman/mason.nvim) that exposes
+convenience APIs for tasks that are either complicated to achieve on the
+client-side or are very "hot" (i.e. requests being made frequently).
 
 # Endpoints
 
