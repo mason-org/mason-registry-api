@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct GitHubReleaseAsset {
+pub struct GitHubReleaseAssetDto {
     pub id: u64,
     pub url: String,
     pub name: String,
@@ -13,10 +13,10 @@ pub struct GitHubReleaseAsset {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct GitHubRelease {
+pub struct GitHubReleaseDto {
     pub id: u64,
     pub tag_name: String,
     pub draft: bool,
     pub prerelease: bool,
-    pub assets: Vec<GitHubReleaseAsset>,
+    pub assets: Vec<GitHubReleaseAssetDto>,
 }

@@ -2,8 +2,9 @@ use std::{collections::HashMap, str::FromStr};
 
 use vercel_lambda::error::VercelError;
 
-pub mod github;
 pub mod api;
+pub mod github;
+pub mod npm;
 
 #[derive(Debug)]
 pub struct UriQueryParams {

@@ -18,9 +18,13 @@ version = "0.11"
 features = ["blocking", "json"]
 
 [[bin]]
-name = "latest-tag"
+name = "repo-latest-tag"
 path = "repo/[owner]/[name]/latest-tag.rs"
 
 [[bin]]
-name = "latest-release"
+name = "repo-latest-release"
 path = "repo/[owner]/[name]/latest-release.rs"
+
+[[bin]]
+name = "npm-latest-version"
+path = "npm/[package]/latest-version.rs"

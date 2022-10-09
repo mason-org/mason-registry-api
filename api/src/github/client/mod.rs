@@ -5,13 +5,13 @@ use std::{collections::HashMap, fmt::Display};
 
 use reqwest::{
     blocking::{Client, Response},
-    header::{HeaderMap, AUTHORIZATION, USER_AGENT},
+    header::{HeaderMap, ACCEPT, AUTHORIZATION, USER_AGENT},
 };
 use serde::Serialize;
 use serde_json::Value;
 use vercel_lambda::error::VercelError;
 
-use self::{graphql::latest_tag::LatestTagQueryResponse, spec::GitHubRelease};
+use self::{graphql::latest_tag::LatestTagQueryResponse, spec::GitHubReleaseDto};
 
 use super::GitHubRepo;
 
@@ -58,6 +58,12 @@ impl GitHubClient {
 
     fn headers(&self) -> HeaderMap {
         let mut headers = HeaderMap::new();
+        headers.insert(
+            ACCEPT,
+            "application/vnd.github.v3+json; q=1.0, application/json; q=0.8"
+                .parse()
+                .unwrap(),
+        );
         headers.insert(
             AUTHORIZATION,
             format!("Bearer {}", self.api_key).parse().unwrap(),
@@ -116,7 +122,7 @@ impl GitHubClient {
         .map_err(|_| VercelError::new("Failed to parse JSON."))
     }
 
-    pub fn fetch_releases(&self, repo: &GitHubRepo) -> Result<Vec<GitHubRelease>, VercelError> {
+    pub fn fetch_releases(&self, repo: &GitHubRepo) -> Result<Vec<GitHubReleaseDto>, VercelError> {
         self.get(GitHubApiEndpoint::Releases(repo))
             .map_err(|e| {
                 VercelError::new(&format!(
@@ -133,7 +139,7 @@ impl GitHubClient {
         &self,
         repo: &GitHubRepo,
         include_prerelease: bool,
-    ) -> Result<GitHubRelease, VercelError> {
+    ) -> Result<GitHubReleaseDto, VercelError> {
         let releases = self.fetch_releases(&repo)?;
         releases
             .into_iter()
