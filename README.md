@@ -49,6 +49,20 @@ GET /api/repo/sumneko/vscode-lua/latest-release
 }
 ```
 
+## `/api/npm/{package}/latest-version`
+
+Returns the latest version (`$.dist-tag["latest"]`) of the provided `{package}`.
+
+Example:
+
+```
+GET /api/npm/@elm-tooling/elm-language-server/latest-version
+{
+  "name": "@elm-tooling/elm-language-server",
+  "version": "2.5.2"
+}
+```
+
 ## Dev
 
 ```sh

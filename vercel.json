@@ -12,5 +12,12 @@
       "source": "/api/npm/:path((?!@).*)",
       "destination": "/api/npm/_/:path"
     }
+  ],
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "https://github.com/williamboman/mason-registry-api",
+      "permanent": false
+    }
   ]
 }
