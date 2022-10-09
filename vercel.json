@@ -6,5 +6,11 @@
     "api/npm/**/*.rs": {
       "runtime": "vercel-rust@3.1.2"
     }
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/api/npm/:path((?!@).*)",
+      "destination": "/api/npm/_/:path"
+    }
+  ]
 }

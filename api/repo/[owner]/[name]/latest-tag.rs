@@ -1,5 +1,5 @@
 use mason_registry_api::{
-    get_query_params,
+    parse_url,
     github::{client::GitHubClient, GitHubRepo},
 };
 use http::{Method, StatusCode};
@@ -17,7 +17,7 @@ fn handler(request: Request) -> Result<impl IntoResponse, VercelError> {
             .body(Body::Empty)?);
     }
 
-    let query_params = get_query_params(&request)?;
+    let query_params = parse_url(&request)?;
     let repo: GitHubRepo = (&query_params).try_into()?;
     let client = GitHubClient::new(api_key);
 

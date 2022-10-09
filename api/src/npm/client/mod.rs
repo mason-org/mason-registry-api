@@ -26,7 +26,13 @@ impl<'a> NpmEndpoint<'a> {
 impl<'a> Display for NpmEndpoint<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            NpmEndpoint::Package(pkg) => f.write_fmt(format_args!("/{}", pkg.name)),
+            NpmEndpoint::Package(pkg) => match pkg {
+                NpmPackage { scope: None, name } => f.write_fmt(format_args!("/{}", name)),
+                NpmPackage {
+                    scope: Some(scope),
+                    name,
+                } => f.write_fmt(format_args!("/{}/{}", scope, name)),
+            },
         }
     }
 }

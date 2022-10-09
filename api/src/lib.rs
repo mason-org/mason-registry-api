@@ -1,4 +1,4 @@
-use std::{collections::HashMap, str::FromStr};
+use std::{borrow::Cow, ops::Deref};
 
 use vercel_lambda::error::VercelError;
 
@@ -6,51 +6,39 @@ pub mod api;
 pub mod github;
 pub mod npm;
 
-#[derive(Debug)]
-pub struct UriQueryParams {
-    params: HashMap<String, Option<String>>,
+pub fn parse_url(request: &vercel_lambda::Request) -> Result<url::Url, VercelError> {
+    url::Url::parse(&request.uri().to_string())
+        .map_err(|_| VercelError::new("Failed to parse request URI."))
 }
 
-impl UriQueryParams {
-    pub fn get<T>(&self, key: T) -> &Option<String>
-    where
-        T: AsRef<str>,
-    {
-        self.params.get(key.as_ref()).unwrap_or(&None)
-    }
-
-    pub fn has_flag<T>(&self, key: T) -> bool
-    where
-        T: AsRef<str>,
-    {
-        match self.get(key).as_deref() {
-            Some("1") | Some("true") => true,
-            _ => false,
+pub fn url_has_query_flag(url: &url::Url, query: &str) -> bool {
+    for (key, val) in url.query_pairs() {
+        if key == Cow::Borrowed(query) {
+            match val.deref() {
+                "" | "1" | "true" => return true,
+                _ => return false,
+            }
         }
     }
+    false
 }
 
-impl FromStr for UriQueryParams {
-    type Err = VercelError;
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use url::Url;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut params: HashMap<String, Option<String>> = HashMap::new();
-        for part in s.split("&") {
-            let mut param = part.splitn(2, "=");
-            let key = param
-                .next()
-                .ok_or_else(|| VercelError::new("Failed to get UriQueryParams key."))?;
-            let value = param.next();
-            params.insert(key.to_owned(), value.map(ToOwned::to_owned));
-        }
-        return Ok(UriQueryParams { params });
+    #[test]
+    fn should_parse_query_flags() {
+        let url = Url::parse(
+            "https://api.mason-registry.dev/api/endpoint?do_something=1&do_something_else=true&do&not=false",
+        )
+        .unwrap();
+
+        assert!(url_has_query_flag(&url, "do_something"));
+        assert!(url_has_query_flag(&url, "do_something_else"));
+        assert!(url_has_query_flag(&url, "do"));
+        assert!(!url_has_query_flag(&url, "do_nothing"));
+        assert!(!url_has_query_flag(&url, "not"));
     }
-}
-
-pub fn get_query_params(request: &vercel_lambda::Request) -> Result<UriQueryParams, VercelError> {
-    request
-        .uri()
-        .query()
-        .ok_or_else(|| VercelError::new("Failed to parse query."))?
-        .parse()
 }

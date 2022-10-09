@@ -1,10 +1,8 @@
 pub mod client;
 
-use std::{convert::TryFrom, fmt::Display};
+use std::{collections::HashMap, convert::TryFrom, fmt::Display, ops::Deref};
 
 use vercel_lambda::error::VercelError;
-
-use crate::UriQueryParams;
 
 #[derive(Debug)]
 pub struct GitHubRepo {
@@ -18,19 +16,23 @@ impl Display for GitHubRepo {
     }
 }
 
-impl TryFrom<&UriQueryParams> for GitHubRepo {
+impl TryFrom<&url::Url> for GitHubRepo {
     type Error = VercelError;
 
-    fn try_from(params: &UriQueryParams) -> Result<Self, Self::Error> {
-        if let (Some(owner), Some(name)) = (
-            params.params.get("owner").and_then(|o| o.to_owned()),
-            params.params.get("name").and_then(|o| o.to_owned()),
-        ) {
-            return Ok(Self { owner, name });
+    fn try_from(url: &url::Url) -> Result<Self, Self::Error> {
+        let mut query = HashMap::new();
+        for (key, val) in url.query_pairs().into_owned() {
+            query.insert(key, val);
         }
-        Err(VercelError::new(&format!(
-            "Failed to parse repo from {:?}",
-            params
-        )))
+
+        match (query.get("owner"), query.get("name")) {
+            (Some(owner), Some(name)) => Ok(Self {
+                owner: owner.to_owned(),
+                name: name.to_owned(),
+            }),
+            (Some(_), None) | (None, None) | (None, Some(_)) => {
+                Err(VercelError::new("Failed to parse npm package from URL."))
+            }
+        }
     }
 }

@@ -1,6 +1,6 @@
 use http::{Method, StatusCode};
 use mason_registry_api::{
-    get_query_params,
+    parse_url,
     npm::{
         client::{
             spec::{NpmAbbrevPackageDto, NpmDistTag},
@@ -45,8 +45,8 @@ fn handler(request: Request) -> Result<impl IntoResponse, VercelError> {
             .body(Body::Empty)?);
     }
 
-    let query_params = get_query_params(&request)?;
-    let package: NpmPackage = (&query_params).try_into()?;
+    let url = parse_url(&request)?;
+    let package: NpmPackage = (&url).try_into()?;
     let client = NpmClient::new();
 
     let response: LatestVersionResponse = client.fetch_package(&package)?.try_into()?;
