@@ -1,8 +1,8 @@
-use mason_registry_api::{
-    parse_url,
-    github::{client::GitHubClient, GitHubRepo},
-};
 use http::{Method, StatusCode};
+use mason_registry_api::{
+    github::{client::GitHubClient, GitHubRepo},
+    parse_url,
+};
 use std::{convert::TryInto, error::Error};
 
 use vercel_lambda::{error::VercelError, lambda, Body, IntoResponse, Request, Response};
