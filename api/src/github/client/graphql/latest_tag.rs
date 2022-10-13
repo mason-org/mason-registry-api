@@ -29,11 +29,11 @@ pub(crate) static QUERY: &str = r#"
 "#;
 
 #[derive(Serialize)]
-pub struct LatestTagQueryResponse {
+pub struct LatestTagQuery {
     pub tag: String,
 }
 
-impl LatestTagQueryResponse {
+impl LatestTagQuery {
     fn get_node_from_original_response(
         response: &HashMap<String, serde_json::Value>,
     ) -> Option<&serde_json::Value> {
@@ -49,7 +49,7 @@ impl LatestTagQueryResponse {
     }
 }
 
-impl<'de> Deserialize<'de> for LatestTagQueryResponse {
+impl<'de> Deserialize<'de> for LatestTagQuery {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
@@ -63,7 +63,7 @@ impl<'de> Deserialize<'de> for LatestTagQueryResponse {
             .ok_or_else(|| serde::de::Error::missing_field("name"))?;
 
         match name_value {
-            serde_json::Value::String(tag) => Ok(LatestTagQueryResponse {
+            serde_json::Value::String(tag) => Ok(LatestTagQuery {
                 tag: tag.to_owned(),
             }),
             _ => Err(serde::de::Error::invalid_type(

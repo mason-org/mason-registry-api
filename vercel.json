@@ -11,6 +11,18 @@
     {
       "source": "/api/npm/:path((?!@).*)",
       "destination": "/api/npm/_/:path"
+    },
+    {
+      "source": "/api/npm/:scope/:package/latest-version",
+      "destination": "/api/npm/:scope/:package/versions/latest"
+    },
+    {
+      "source": "/api/repo/:owner/:name/latest-release",
+      "destination": "/api/repo/:owner/:name/releases/latest"
+    },
+    {
+      "source": "/api/repo/:owner/:name/latest-tag",
+      "destination": "/api/repo/:owner/:name/tags/latest"
     }
   ],
   "redirects": [

@@ -1,17 +1,19 @@
 pub mod graphql;
+pub mod response;
 pub mod spec;
 
-use std::{collections::HashMap, fmt::Display};
+use std::{collections::HashMap, convert::TryInto, fmt::Display};
 
+use parse_link_header::Link;
 use reqwest::{
     blocking::{Client, Response},
     header::{HeaderMap, ACCEPT, AUTHORIZATION, USER_AGENT},
 };
-use serde::Serialize;
+use serde::{de::DeserializeOwned, Serialize};
 use serde_json::Value;
 use vercel_lambda::error::VercelError;
 
-use self::{graphql::latest_tag::LatestTagQueryResponse, spec::GitHubReleaseDto};
+use self::{graphql::latest_tag::LatestTagQuery, response::GitHubResponse, spec::GitHubReleaseDto};
 
 use super::GitHubRepo;
 
@@ -24,11 +26,15 @@ pub struct GraphQLRequest {
 enum GitHubApiEndpoint<'a> {
     GraphQL,
     Releases(&'a GitHubRepo),
+    Link(Link),
 }
 
 impl<'a> GitHubApiEndpoint<'a> {
     fn as_full_url(&self) -> String {
-        format!("https://api.github.com{}", self)
+        match self {
+            GitHubApiEndpoint::Link(uri) => uri.raw_uri.to_owned(),
+            endpoint => format!("https://api.github.com{}", endpoint),
+        }
     }
 }
 
@@ -39,7 +45,31 @@ impl<'a> Display for GitHubApiEndpoint<'a> {
             GitHubApiEndpoint::Releases(repo) => {
                 f.write_fmt(format_args!("/repos/{}/{}/releases", repo.owner, repo.name))
             }
+            GitHubApiEndpoint::Link(link) => f.write_str(&link.raw_uri),
         }
+    }
+}
+
+#[derive(Debug)]
+pub struct GitHubPagination {
+    pub page: u8,
+    pub per_page: u8,
+}
+
+impl GitHubPagination {
+    pub const MAX_PAGE_LIMIT: u8 = 100;
+    const DEFAULT_PAGE_LIMIT: u8 = 25;
+
+    pub fn with_page(page: u8) -> Self {
+        Self {
+            page,
+            per_page: Self::DEFAULT_PAGE_LIMIT,
+        }
+    }
+
+    pub fn with_page_limit(mut self, page_limit: u8) -> Self {
+        self.per_page = page_limit;
+        self
     }
 }
 
@@ -54,6 +84,107 @@ impl GitHubClient {
             api_key,
             client: reqwest::blocking::Client::new(),
         }
+    }
+
+    pub fn paginate<T, Init, Cond>(&self, init: Init, cond: Cond) -> Result<Vec<T>, VercelError>
+    where
+        T: DeserializeOwned,
+        Init: Fn() -> Result<GitHubResponse<Vec<T>>, VercelError>,
+        Cond: Fn(&GitHubResponse<Vec<T>>) -> bool,
+    {
+        let mut data = Vec::with_capacity(GitHubPagination::MAX_PAGE_LIMIT.into());
+        let mut response = init()?;
+        loop {
+            let should_continue = cond(&response);
+            data.append(&mut response.data);
+            if !should_continue {
+                break;
+            }
+            if let Some(mut links) = response.links {
+                if let Some(next) = links.remove(&Some("next".to_owned())) {
+                    response = self
+                        .get(GitHubApiEndpoint::Link(next), None)
+                        .map_err(|_| VercelError::new("Failed to paginate."))?
+                        .try_into()?;
+                } else {
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
+        Ok(data)
+    }
+
+    pub fn fetch_latest_tag(
+        &self,
+        repo: &GitHubRepo,
+    ) -> Result<GitHubResponse<LatestTagQuery>, VercelError> {
+        self.graphql(GraphQLRequest {
+            query: graphql::latest_tag::QUERY.to_owned(),
+            variables: HashMap::from([
+                ("owner".to_owned(), repo.owner.clone().into()),
+                ("name".to_owned(), repo.name.clone().into()),
+            ]),
+        })
+        .map_err(|e| {
+            VercelError::new(&format!(
+                "Failed to fetch latest tag. {:?} {:?}",
+                e.url(),
+                e.status()
+            ))
+        })?
+        .try_into()
+    }
+
+    pub fn fetch_releases(
+        &self,
+        repo: &GitHubRepo,
+        pagination: Option<GitHubPagination>,
+    ) -> Result<GitHubResponse<Vec<GitHubReleaseDto>>, VercelError> {
+        self.get(GitHubApiEndpoint::Releases(repo), pagination)
+            .map_err(|e| {
+                VercelError::new(&format!(
+                    "Failed to fetch latest tag. {:?} {:?}",
+                    e.url(),
+                    e.status()
+                ))
+            })?
+            .try_into()
+    }
+
+    pub fn fetch_latest_release(
+        &self,
+        repo: &GitHubRepo,
+        include_prerelease: bool,
+    ) -> Result<GitHubReleaseDto, VercelError> {
+        let is_latest_release = |release: &GitHubReleaseDto| {
+            if include_prerelease {
+                !release.draft
+            } else {
+                !release.draft && !release.prerelease
+            }
+        };
+        let releases = self.paginate(
+            || {
+                self.fetch_releases(
+                    &repo,
+                    Some(GitHubPagination {
+                        page: 1,
+                        per_page: GitHubPagination::MAX_PAGE_LIMIT,
+                    }),
+                )
+            },
+            |response| {
+                (&response.data)
+                    .into_iter()
+                    .find(|r| is_latest_release(*r))
+                    .is_none()
+            },
+        )?;
+        releases.into_iter().find(is_latest_release).ok_or_else(|| {
+            VercelError::new(&format!("Unable to find latest release for repo {}.", repo))
+        })
     }
 
     fn headers(&self) -> HeaderMap {
@@ -81,9 +212,19 @@ impl GitHubClient {
         self.post(GitHubApiEndpoint::GraphQL, &request)
     }
 
-    fn get(&self, endpoint: GitHubApiEndpoint) -> Result<Response, reqwest::Error> {
+    fn get(
+        &self,
+        endpoint: GitHubApiEndpoint,
+        pagination: Option<GitHubPagination>,
+    ) -> Result<Response, reqwest::Error> {
+        let query = match pagination {
+            Some(pagination) => vec![("page", pagination.page), ("per_page", pagination.per_page)],
+
+            None => vec![],
+        };
         self.client
             .get(endpoint.as_full_url())
+            .query(&query)
             .headers(self.headers())
             .send()
     }
@@ -98,60 +239,5 @@ impl GitHubClient {
             .headers(self.headers())
             .json(json)
             .send()
-    }
-
-    pub fn fetch_latest_tag(
-        &self,
-        repo: &GitHubRepo,
-    ) -> Result<LatestTagQueryResponse, VercelError> {
-        self.graphql(GraphQLRequest {
-            query: graphql::latest_tag::QUERY.to_owned(),
-            variables: HashMap::from([
-                ("owner".to_owned(), repo.owner.clone().into()),
-                ("name".to_owned(), repo.name.clone().into()),
-            ]),
-        })
-        .map_err(|e| {
-            VercelError::new(&format!(
-                "Failed to fetch latest tag. {:?} {:?}",
-                e.url(),
-                e.status()
-            ))
-        })?
-        .json()
-        .map_err(|_| VercelError::new("Failed to parse JSON."))
-    }
-
-    pub fn fetch_releases(&self, repo: &GitHubRepo) -> Result<Vec<GitHubReleaseDto>, VercelError> {
-        self.get(GitHubApiEndpoint::Releases(repo))
-            .map_err(|e| {
-                VercelError::new(&format!(
-                    "Failed to fetch latest tag. {:?} {:?}",
-                    e.url(),
-                    e.status()
-                ))
-            })?
-            .json()
-            .map_err(|_| VercelError::new("Failed to parse JSON."))
-    }
-
-    pub fn fetch_latest_release(
-        &self,
-        repo: &GitHubRepo,
-        include_prerelease: bool,
-    ) -> Result<GitHubReleaseDto, VercelError> {
-        let releases = self.fetch_releases(&repo)?;
-        releases
-            .into_iter()
-            .find(|release| {
-                if include_prerelease {
-                    !release.draft
-                } else {
-                    !release.draft && !release.prerelease
-                }
-            })
-            .ok_or_else(|| {
-                VercelError::new(&format!("Unable to find latest release for repo {}.", repo))
-            })
     }
 }

@@ -1,6 +1,6 @@
 pub mod client;
 
-use std::{collections::HashMap, convert::TryFrom, fmt::Display, ops::Deref};
+use std::{collections::HashMap, convert::TryFrom, fmt::Display};
 
 use vercel_lambda::error::VercelError;
 

@@ -21,7 +21,7 @@ fn handler(request: Request) -> Result<impl IntoResponse, VercelError> {
     let repo: GitHubRepo = (&query_params).try_into()?;
     let client = GitHubClient::new(api_key);
 
-    mason_registry_api::api::json(client.fetch_latest_tag(&repo)?)
+    mason_registry_api::api::json(client.fetch_latest_tag(&repo)?.data)
 }
 
 // Start the runtime with the handler
