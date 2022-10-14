@@ -3,6 +3,7 @@ use std::{collections::HashMap, convert::TryFrom};
 use vercel_lambda::error::VercelError;
 
 pub mod client;
+pub mod manager;
 
 #[derive(Debug)]
 pub struct NpmPackage {

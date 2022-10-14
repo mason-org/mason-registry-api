@@ -1,13 +1,13 @@
 use http::{Method, StatusCode};
 use mason_registry_api::{
-    parse_url,
     npm::{
         client::{
             spec::{NpmAbbrevPackageDto, NpmDistTag},
             NpmClient,
         },
-        NpmPackage,
+        manager::NpmManager,
     },
+    parse_url,
 };
 use serde::Serialize;
 use std::{
@@ -46,12 +46,10 @@ fn handler(request: Request) -> Result<impl IntoResponse, VercelError> {
     }
 
     let url = parse_url(&request)?;
-    let package: NpmPackage = (&url).try_into()?;
-    let client = NpmClient::new();
-
-    let response: LatestVersionResponse = client.fetch_package(&package)?.try_into()?;
-
-    mason_registry_api::api::json(response)
+    let npm_package = (&url).try_into()?;
+    let manager = NpmManager::new(NpmClient::new());
+    let package = manager.get_package(&npm_package)?;
+    mason_registry_api::json::<LatestVersionResponse>(package.try_into()?)
 }
 
 // Start the runtime with the handler

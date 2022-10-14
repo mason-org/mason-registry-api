@@ -1,8 +1,12 @@
 use std::{borrow::Cow, ops::Deref};
 
-use vercel_lambda::error::VercelError;
+use http::{
+    header::{CACHE_CONTROL, CONTENT_TYPE},
+    Response,
+};
+use serde::Serialize;
+use vercel_lambda::{error::VercelError, Body};
 
-pub mod api;
 pub mod github;
 pub mod npm;
 
@@ -21,6 +25,18 @@ pub fn url_has_query_flag(url: &url::Url, query: &str) -> bool {
         }
     }
     false
+}
+
+pub fn json<T: Serialize>(data: T) -> Result<Response<Body>, VercelError> {
+    Response::builder()
+        .status(200)
+        .header(CONTENT_TYPE, "application/json")
+        .header(CACHE_CONTROL, "public, s-maxage=1800")
+        .body(Body::Text(
+            serde_json::to_string_pretty(&data)
+                .map_err(|_| VercelError::new("Failed to serialize."))?,
+        ))
+        .map_err(|_| VercelError::new("Failed to build response."))
 }
 
 #[cfg(test)]

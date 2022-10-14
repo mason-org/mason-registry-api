@@ -2,7 +2,7 @@ pub mod graphql;
 pub mod response;
 pub mod spec;
 
-use std::{collections::VecDeque, convert::TryInto, fmt::Display};
+use std::{convert::TryInto, fmt::Display};
 
 use parse_link_header::Link;
 use reqwest::{
@@ -12,11 +12,7 @@ use reqwest::{
 use serde::{de::DeserializeOwned, Serialize};
 use vercel_lambda::error::VercelError;
 
-use self::{
-    graphql::{tags::{TagNode, TagsQuery}, Edge},
-    response::GitHubResponse,
-    spec::GitHubReleaseDto,
-};
+use self::{graphql::tags::TagsQuery, response::GitHubResponse, spec::GitHubReleaseDto};
 
 use super::GitHubRepo;
 
@@ -119,21 +115,6 @@ impl GitHubClient {
         Ok(data)
     }
 
-    pub fn fetch_latest_tag(
-        &self,
-        repo: &GitHubRepo,
-    ) -> Result<GitHubResponse<Edge<TagNode>>, VercelError> {
-        let response = self.fetch_tags(&repo, Some(1), None)?;
-        let mut tags: VecDeque<Edge<TagNode>> = response.data.tags.into();
-        let latest_tag = tags
-            .pop_front()
-            .ok_or_else(|| VercelError::new("Failed to find tag."))?;
-        Ok(GitHubResponse {
-            data: latest_tag,
-            links: None,
-        })
-    }
-
     pub fn fetch_tags(
         &self,
         repo: &GitHubRepo,
@@ -173,40 +154,6 @@ impl GitHubClient {
                 ))
             })?
             .try_into()
-    }
-
-    pub fn fetch_latest_release(
-        &self,
-        repo: &GitHubRepo,
-        include_prerelease: bool,
-    ) -> Result<GitHubReleaseDto, VercelError> {
-        let is_latest_release = |release: &GitHubReleaseDto| {
-            if include_prerelease {
-                !release.draft
-            } else {
-                !release.draft && !release.prerelease
-            }
-        };
-        let releases = self.paginate(
-            || {
-                self.fetch_releases(
-                    &repo,
-                    Some(GitHubPagination {
-                        page: 1,
-                        per_page: GitHubPagination::MAX_PAGE_LIMIT,
-                    }),
-                )
-            },
-            |response| {
-                (&response.data)
-                    .into_iter()
-                    .find(|r| is_latest_release(*r))
-                    .is_none()
-            },
-        )?;
-        releases.into_iter().find(is_latest_release).ok_or_else(|| {
-            VercelError::new(&format!("Unable to find latest release for repo {}.", repo))
-        })
     }
 
     fn headers(&self) -> HeaderMap {

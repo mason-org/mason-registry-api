@@ -5,6 +5,7 @@ use mason_registry_api::{
             graphql::{tags::TagNode, Edge},
             GitHubClient,
         },
+        manager::GitHubManager,
         GitHubRepo,
     },
     parse_url,
@@ -37,11 +38,12 @@ fn handler(request: Request) -> Result<impl IntoResponse, VercelError> {
             .body(Body::Empty)?);
     }
 
-    let query_params = parse_url(&request)?;
-    let repo: GitHubRepo = (&query_params).try_into()?;
-    let client = GitHubClient::new(api_key);
+    let url = parse_url(&request)?;
+    let repo: GitHubRepo = (&url).try_into()?;
+    let manager = GitHubManager::new(GitHubClient::new(api_key));
+    let latest_tag = manager.get_latest_tag(&repo)?;
 
-    mason_registry_api::api::json::<TagResponse>(client.fetch_latest_tag(&repo)?.data.into())
+    mason_registry_api::json::<TagResponse>(latest_tag.into())
 }
 
 // Start the runtime with the handler

@@ -1,11 +1,22 @@
 use http::{Method, StatusCode};
 use mason_registry_api::github::{
-    client::{GitHubClient, GitHubPagination},
+    client::{spec::GitHubReleaseDto, GitHubClient},
+    manager::GitHubManager,
     GitHubRepo,
 };
+use serde::Serialize;
 use std::{convert::TryInto, error::Error};
 
 use vercel_lambda::{error::VercelError, lambda, Body, IntoResponse, Request, Response};
+
+#[derive(Serialize)]
+struct ReleasesResponse(Vec<String>);
+
+impl From<Vec<GitHubReleaseDto>> for ReleasesResponse {
+    fn from(releases: Vec<GitHubReleaseDto>) -> Self {
+        ReleasesResponse(releases.into_iter().map(|r| r.tag_name).collect())
+    }
+}
 
 fn handler(request: Request) -> Result<impl IntoResponse, VercelError> {
     let api_key: String =
@@ -19,23 +30,10 @@ fn handler(request: Request) -> Result<impl IntoResponse, VercelError> {
 
     let url = mason_registry_api::parse_url(&request)?;
     let repo: GitHubRepo = (&url).try_into()?;
+    let manager = GitHubManager::new(GitHubClient::new(api_key));
+    let releases = manager.get_all_releases(&repo)?;
 
-    let client = GitHubClient::new(api_key);
-
-    let releases = client.paginate(
-        || {
-            client.fetch_releases(
-                &repo,
-                Some(GitHubPagination {
-                    page: 1,
-                    per_page: GitHubPagination::MAX_PAGE_LIMIT,
-                }),
-            )
-        },
-        |_| true,
-    )?;
-
-    mason_registry_api::api::json::<Vec<String>>(releases.into_iter().map(|r| r.tag_name).collect())
+    mason_registry_api::json::<ReleasesResponse>(releases.into())
 }
 
 // Start the runtime with the handler

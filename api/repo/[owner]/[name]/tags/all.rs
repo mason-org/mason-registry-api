@@ -1,14 +1,27 @@
 use http::{Method, StatusCode};
 use mason_registry_api::{
     github::{
-        client::{GitHubClient, GitHubPagination},
-        GitHubRepo,
+        client::{
+            graphql::{tags::TagNode, Edge},
+            GitHubClient,
+        },
+        manager::GitHubManager,
     },
     parse_url,
 };
+use serde::Serialize;
 use std::{convert::TryInto, error::Error};
 
 use vercel_lambda::{error::VercelError, lambda, Body, IntoResponse, Request, Response};
+
+#[derive(Serialize)]
+struct TagsResponse(Vec<String>);
+
+impl From<Vec<Edge<TagNode>>> for TagsResponse {
+    fn from(edges: Vec<Edge<TagNode>>) -> Self {
+        Self(edges.into_iter().map(|t| t.node.name).collect())
+    }
+}
 
 fn handler(request: Request) -> Result<impl IntoResponse, VercelError> {
     let api_key: String =
@@ -20,35 +33,12 @@ fn handler(request: Request) -> Result<impl IntoResponse, VercelError> {
             .body(Body::Empty)?);
     }
 
-    let query_params = parse_url(&request)?;
-    let repo: GitHubRepo = (&query_params).try_into()?;
-    let client = GitHubClient::new(api_key);
+    let url = parse_url(&request)?;
+    let repo = (&url).try_into()?;
+    let manager = GitHubManager::new(GitHubClient::new(api_key));
+    let tags = manager.get_all_tags(&repo)?;
 
-    let mut tags: Vec<String> = vec![];
-    let mut cursor = None;
-
-    loop {
-        let response =
-            client.fetch_tags(&repo, Some(GitHubPagination::MAX_PAGE_LIMIT.into()), cursor)?;
-        cursor = response.data.tags.last().map(|t| t.cursor.to_owned());
-
-        let tags_size = response.data.tags.len();
-
-        tags.append(
-            &mut response
-                .data
-                .tags
-                .into_iter()
-                .map(|t| t.node.name)
-                .collect(),
-        );
-
-        if tags_size < GitHubPagination::MAX_PAGE_LIMIT.into() {
-            break;
-        }
-    }
-
-    mason_registry_api::api::json(tags)
+    mason_registry_api::json::<TagsResponse>(tags.into())
 }
 
 // Start the runtime with the handler

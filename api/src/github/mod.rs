@@ -1,4 +1,5 @@
 pub mod client;
+pub mod manager;
 
 use std::{collections::HashMap, convert::TryFrom, fmt::Display};
 
