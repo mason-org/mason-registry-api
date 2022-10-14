@@ -13,7 +13,7 @@ use serde::{de::DeserializeOwned, Serialize};
 use vercel_lambda::error::VercelError;
 
 use self::{
-    graphql::tags::{Edge, TagNode, TagsQuery},
+    graphql::{tags::{TagNode, TagsQuery}, Edge},
     response::GitHubResponse,
     spec::GitHubReleaseDto,
 };

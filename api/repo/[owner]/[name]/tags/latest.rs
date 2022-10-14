@@ -2,7 +2,7 @@ use http::{Method, StatusCode};
 use mason_registry_api::{
     github::{
         client::{
-            graphql::tags::{Edge, TagNode},
+            graphql::{tags::TagNode, Edge},
             GitHubClient,
         },
         GitHubRepo,

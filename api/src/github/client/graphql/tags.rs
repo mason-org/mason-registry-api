@@ -3,6 +3,8 @@ use std::collections::HashMap;
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::Value;
 
+use super::Edge;
+
 #[derive(Serialize)]
 pub struct Variables {
     pub owner: String,
@@ -25,12 +27,6 @@ pub const QUERY: &str = r#"
       }
     }
 "#;
-
-#[derive(Debug, Deserialize)]
-pub struct Edge<Node> {
-    pub cursor: String,
-    pub node: Node,
-}
 
 #[derive(Debug, Deserialize)]
 pub struct TagNode {
