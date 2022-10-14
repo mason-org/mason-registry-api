@@ -1,5 +1,5 @@
 use http::{Method, StatusCode};
-use mason_registry_api::github::{manager::GitHubManager, GitHubRepo};
+use mason_registry_api::github::{client::GitHubClient, manager::GitHubManager, GitHubRepo};
 use std::{convert::TryInto, error::Error};
 
 use vercel_lambda::{error::VercelError, lambda, Body, IntoResponse, Request, Response};
