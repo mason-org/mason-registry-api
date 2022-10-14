@@ -1,1 +1,1 @@
-pub mod latest_tag;
+pub mod tags;

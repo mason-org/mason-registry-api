@@ -27,6 +27,10 @@ name = "repo-tags-latest"
 path = "repo/[owner]/[name]/tags/latest.rs"
 
 [[bin]]
+name = "repo-tags-all"
+path = "repo/[owner]/[name]/tags/all.rs"
+
+[[bin]]
 name = "npm-versions-latest"
 path = "npm/[scope]/[package]/versions/latest.rs"
 

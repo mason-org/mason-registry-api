@@ -2,7 +2,7 @@ pub mod graphql;
 pub mod response;
 pub mod spec;
 
-use std::{collections::HashMap, convert::TryInto, fmt::Display};
+use std::{collections::VecDeque, convert::TryInto, fmt::Display};
 
 use parse_link_header::Link;
 use reqwest::{
@@ -10,23 +10,26 @@ use reqwest::{
     header::{HeaderMap, ACCEPT, AUTHORIZATION, USER_AGENT},
 };
 use serde::{de::DeserializeOwned, Serialize};
-use serde_json::Value;
 use vercel_lambda::error::VercelError;
 
-use self::{graphql::latest_tag::LatestTagQuery, response::GitHubResponse, spec::GitHubReleaseDto};
+use self::{
+    graphql::tags::{Edge, TagNode, TagsQuery},
+    response::GitHubResponse,
+    spec::GitHubReleaseDto,
+};
 
 use super::GitHubRepo;
 
 #[derive(Serialize)]
-pub struct GraphQLRequest {
+pub struct GraphQLRequest<Variables: Serialize> {
     pub query: String,
-    pub variables: HashMap<String, Value>,
+    pub variables: Variables,
 }
 
 enum GitHubApiEndpoint<'a> {
     GraphQL,
-    Releases(&'a GitHubRepo),
     Link(Link),
+    Releases(&'a GitHubRepo),
 }
 
 impl<'a> GitHubApiEndpoint<'a> {
@@ -42,10 +45,10 @@ impl<'a> Display for GitHubApiEndpoint<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             GitHubApiEndpoint::GraphQL => f.write_str("/graphql"),
+            GitHubApiEndpoint::Link(link) => f.write_str(&link.raw_uri),
             GitHubApiEndpoint::Releases(repo) => {
                 f.write_fmt(format_args!("/repos/{}/{}/releases", repo.owner, repo.name))
             }
-            GitHubApiEndpoint::Link(link) => f.write_str(&link.raw_uri),
         }
     }
 }
@@ -119,17 +122,36 @@ impl GitHubClient {
     pub fn fetch_latest_tag(
         &self,
         repo: &GitHubRepo,
-    ) -> Result<GitHubResponse<LatestTagQuery>, VercelError> {
+    ) -> Result<GitHubResponse<Edge<TagNode>>, VercelError> {
+        let response = self.fetch_tags(&repo, Some(1), None)?;
+        let mut tags: VecDeque<Edge<TagNode>> = response.data.tags.into();
+        let latest_tag = tags
+            .pop_front()
+            .ok_or_else(|| VercelError::new("Failed to find tag."))?;
+        Ok(GitHubResponse {
+            data: latest_tag,
+            links: None,
+        })
+    }
+
+    pub fn fetch_tags(
+        &self,
+        repo: &GitHubRepo,
+        first: Option<u64>,
+        after: Option<String>,
+    ) -> Result<GitHubResponse<TagsQuery>, VercelError> {
         self.graphql(GraphQLRequest {
-            query: graphql::latest_tag::QUERY.to_owned(),
-            variables: HashMap::from([
-                ("owner".to_owned(), repo.owner.clone().into()),
-                ("name".to_owned(), repo.name.clone().into()),
-            ]),
+            query: graphql::tags::QUERY.to_owned(),
+            variables: graphql::tags::Variables {
+                owner: repo.owner.clone(),
+                name: repo.name.clone(),
+                first,
+                after,
+            },
         })
         .map_err(|e| {
             VercelError::new(&format!(
-                "Failed to fetch latest tag. {:?} {:?}",
+                "Failed to fetch tags. {:?} {:?}",
                 e.url(),
                 e.status()
             ))
@@ -145,7 +167,7 @@ impl GitHubClient {
         self.get(GitHubApiEndpoint::Releases(repo), pagination)
             .map_err(|e| {
                 VercelError::new(&format!(
-                    "Failed to fetch latest tag. {:?} {:?}",
+                    "Failed to fetch releases. {:?} {:?}",
                     e.url(),
                     e.status()
                 ))
@@ -208,7 +230,10 @@ impl GitHubClient {
         headers
     }
 
-    fn graphql(&self, request: GraphQLRequest) -> Result<Response, reqwest::Error> {
+    fn graphql<Variables: Serialize>(
+        &self,
+        request: GraphQLRequest<Variables>,
+    ) -> Result<Response, reqwest::Error> {
         self.post(GitHubApiEndpoint::GraphQL, &request)
     }
 

@@ -4,6 +4,7 @@ use reqwest::blocking::Response;
 use serde::de::DeserializeOwned;
 use vercel_lambda::error::VercelError;
 
+#[derive(Debug)]
 pub struct GitHubResponse<T: DeserializeOwned> {
     pub data: T,
     pub links: Option<parse_link_header::LinkMap>,
