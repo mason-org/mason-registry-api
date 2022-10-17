@@ -1,12 +1,11 @@
 use std::collections::HashMap;
 
-use serde::{de::Visitor, Deserialize};
+use serde::{de::Visitor, Deserialize, Serialize};
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct NpmAbbrevPackageVersionDto {
     pub name: String,
     pub version: String,
-    pub license: Option<String>,
 }
 
 #[derive(Debug, PartialEq, Eq, Hash)]

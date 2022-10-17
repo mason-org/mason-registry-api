@@ -46,3 +46,7 @@ path = "npm/[scope]/[package]/versions/latest.rs"
 [[bin]]
 name = "npm-versions-all"
 path = "npm/[scope]/[package]/versions/all.rs"
+
+[[bin]]
+name = "npm-versions-version"
+path = "npm/[scope]/[package]/versions/[version].rs"

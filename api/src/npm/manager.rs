@@ -2,7 +2,7 @@ use std::cmp::Ordering;
 
 use super::{
     client::{
-        spec::{NpmAbbrevPackageDto, NpmDistTag},
+        spec::{NpmAbbrevPackageDto, NpmAbbrevPackageVersionDto, NpmDistTag},
         NpmClient,
     },
     errors::NpmError,
@@ -31,14 +31,26 @@ impl NpmManager {
         Ok(self.client.fetch_package(&package)?)
     }
 
+    pub fn get_package_version<'a>(
+        &self,
+        package: &'a NpmAbbrevPackageDto,
+        version: &str,
+    ) -> Result<&'a NpmAbbrevPackageVersionDto, NpmError> {
+        package
+            .versions
+            .get(version)
+            .ok_or_else(|| NpmError::ResourceNotFound { source: None })
+    }
+
     pub fn get_latest_package_version<'a>(
         &self,
         package: &'a NpmAbbrevPackageDto,
-    ) -> Result<&'a String, NpmError> {
-        package
+    ) -> Result<&'a NpmAbbrevPackageVersionDto, NpmError> {
+        let latest_version = package
             .dist_tags
             .get(&NpmDistTag::Latest)
-            .ok_or_else(|| NpmError::ResourceNotFound { source: None })
+            .ok_or_else(|| NpmError::ResourceNotFound { source: None })?;
+        self.get_package_version(package, latest_version)
     }
 
     pub fn get_all_package_versions(&self, package: &NpmPackage) -> Result<Vec<String>, NpmError> {
@@ -96,10 +108,16 @@ mod tests {
                 (NpmDistTag::Next, "14.0.0-pre.1".to_owned()),
                 (NpmDistTag::Latest, "13.3.7".to_owned()),
             ]),
-            versions: HashMap::new(),
+            versions: HashMap::from([(
+                "13.3.7".to_owned(),
+                NpmAbbrevPackageVersionDto {
+                    name: "foobar".to_owned(),
+                    version: "13.3.7".to_owned(),
+                },
+            )]),
         };
         let latest_version = manager.get_latest_package_version(&package)?;
-        assert_eq!("13.3.7".to_owned(), *latest_version);
+        assert_eq!("13.3.7".to_owned(), latest_version.version);
         Ok(())
     }
 }
