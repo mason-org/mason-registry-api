@@ -11,9 +11,13 @@ use reqwest::{
 };
 use serde::{de::DeserializeOwned, Serialize};
 
-use self::{graphql::tags::TagsQuery, response::GitHubResponse, spec::GitHubReleaseDto};
+use self::{
+    graphql::tags::TagsQuery,
+    response::GitHubResponse,
+    spec::{GitHubRef, GitHubReleaseDto},
+};
 
-use super::{GitHubReleaseTag, GitHubRepo};
+use super::{GitHubRefId, GitHubRepo, GitHubTag};
 
 #[derive(Serialize)]
 pub struct GraphQLRequest<Variables: Serialize> {
@@ -25,7 +29,8 @@ enum GitHubApiEndpoint<'a> {
     GraphQL,
     Link(Link),
     Releases(&'a GitHubRepo),
-    ReleaseTag(&'a GitHubRepo, &'a GitHubReleaseTag),
+    ReleaseTag(&'a GitHubRepo, &'a GitHubTag),
+    GitRef(&'a GitHubRepo, &'a dyn GitHubRefId),
 }
 
 impl<'a> GitHubApiEndpoint<'a> {
@@ -43,11 +48,16 @@ impl<'a> Display for GitHubApiEndpoint<'a> {
             GitHubApiEndpoint::GraphQL => f.write_str("/graphql"),
             GitHubApiEndpoint::Link(link) => f.write_str(&link.raw_uri),
             GitHubApiEndpoint::Releases(repo) => {
-                f.write_fmt(format_args!("/repos/{}/{}/releases", repo.owner, repo.name))
+                f.write_fmt(format_args!("/repos/{}/releases", repo))
             }
             GitHubApiEndpoint::ReleaseTag(repo, release_tag) => f.write_fmt(format_args!(
-                "/repos/{}/{}/releases/tags/{}",
-                repo.owner, repo.name, release_tag
+                "/repos/{}/releases/tags/{}",
+                repo, release_tag
+            )),
+            GitHubApiEndpoint::GitRef(repo, git_ref) => f.write_fmt(format_args!(
+                "/repos/{}/git/ref/{}",
+                repo,
+                git_ref.get_ref_endpoint()
             )),
         }
     }
@@ -121,6 +131,15 @@ impl GitHubClient {
         .try_into()
     }
 
+    pub fn fetch_ref<GitRef: GitHubRefId>(
+        &self,
+        repo: &GitHubRepo,
+        ref_id: &GitRef,
+    ) -> Result<GitHubResponse<GitHubRef>, reqwest::Error> {
+        self.get(GitHubApiEndpoint::GitRef(repo, ref_id), None)?
+            .try_into()
+    }
+
     pub fn fetch_releases(
         &self,
         repo: &GitHubRepo,
@@ -133,7 +152,7 @@ impl GitHubClient {
     pub fn fetch_release_by_tag(
         &self,
         repo: &GitHubRepo,
-        release: &GitHubReleaseTag,
+        release: &GitHubTag,
     ) -> Result<GitHubResponse<GitHubReleaseDto>, reqwest::Error> {
         self.get(GitHubApiEndpoint::ReleaseTag(&repo, &release), None)?
             .try_into()

@@ -1,5 +1,6 @@
 use http::{Method, StatusCode};
 use mason_registry_api::{
+    api::TagResponse,
     github::{client::GitHubClient, manager::GitHubManager, GitHubTag},
     QueryParams,
 };
@@ -19,12 +20,12 @@ fn handler(request: Request) -> Result<impl IntoResponse, VercelError> {
 
     let url = mason_registry_api::parse_url(&request)?;
     let query_params: QueryParams = (&url).into();
-    let release: GitHubTag = query_params.get("release").unwrap().parse()?;
+    let tag: GitHubTag = query_params.get("tag").unwrap().parse()?;
     let repo = (&query_params).try_into()?;
     let manager = GitHubManager::new(GitHubClient::new(api_key));
 
-    match manager.get_release_by_tag(&repo, &release) {
-        Ok(release) => mason_registry_api::ok_json(release),
+    match manager.get_ref(&repo, &tag) {
+        Ok(github_ref) => mason_registry_api::ok_json::<TagResponse>(github_ref.into()),
         Err(err) => mason_registry_api::err_json(err),
     }
 }

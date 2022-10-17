@@ -3,11 +3,11 @@ use std::collections::VecDeque;
 use super::{
     client::{
         graphql::{tags::TagNode, Edge},
-        spec::GitHubReleaseDto,
+        spec::{GitHubRef, GitHubReleaseDto},
         GitHubClient, GitHubPagination,
     },
     errors::GitHubError,
-    GitHubReleaseTag, GitHubRepo,
+    GitHubRepo, GitHubTag,
 };
 
 pub struct GitHubManager {
@@ -47,6 +47,15 @@ impl GitHubManager {
             .pop_front()
             .ok_or_else(|| GitHubError::ResourceNotFound { source: None })?;
         Ok(latest_tag)
+    }
+
+    pub fn get_ref(
+        &self,
+        repo: &GitHubRepo,
+        tag: &GitHubTag,
+    ) -> Result<GitHubRef, GitHubError> {
+        let tag = self.client.fetch_ref(repo, tag)?;
+        Ok(tag.data)
     }
 
     pub fn get_all_releases(
@@ -105,7 +114,7 @@ impl GitHubManager {
     pub fn get_release_by_tag(
         &self,
         repo: &GitHubRepo,
-        release: &GitHubReleaseTag,
+        release: &GitHubTag,
     ) -> Result<GitHubReleaseDto, GitHubError> {
         Ok(self.client.fetch_release_by_tag(&repo, &release)?.data)
     }

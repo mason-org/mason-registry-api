@@ -14,22 +14,6 @@ pub struct GitHubRepo {
     pub name: String,
 }
 
-pub struct GitHubReleaseTag(String);
-
-impl Display for GitHubReleaseTag {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.0)
-    }
-}
-
-impl FromStr for GitHubReleaseTag {
-    type Err = VercelError;
-
-    fn from_str(str: &str) -> Result<Self, Self::Err> {
-        Ok(Self(str.to_owned()))
-    }
-}
-
 impl Display for GitHubRepo {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}/{}", self.owner, self.name)
@@ -49,5 +33,31 @@ impl TryFrom<&QueryParams> for GitHubRepo {
                 Err(VercelError::new("Failed to parse npm package from URL."))
             }
         }
+    }
+}
+
+pub trait GitHubRefId {
+    fn get_ref_endpoint(&self) -> String;
+}
+
+pub struct GitHubTag(String);
+
+impl GitHubRefId for GitHubTag {
+    fn get_ref_endpoint(&self) -> String {
+        format!("tags/{}", self.0)
+    }
+}
+
+impl Display for GitHubTag {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.0)
+    }
+}
+
+impl FromStr for GitHubTag {
+    type Err = VercelError;
+
+    fn from_str(str: &str) -> Result<Self, Self::Err> {
+        Ok(Self(str.to_owned()))
     }
 }

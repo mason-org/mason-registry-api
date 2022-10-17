@@ -20,3 +20,9 @@ pub struct GitHubReleaseDto {
     pub prerelease: bool,
     pub assets: Vec<GitHubReleaseAssetDto>,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GitHubRef {
+    pub r#ref: String,
+    pub node_id: String,
+}
