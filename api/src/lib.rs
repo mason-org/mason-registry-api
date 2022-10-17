@@ -1,12 +1,14 @@
-use std::{borrow::Cow, ops::Deref};
+use std::{collections::HashMap, ops::Deref};
 
+use errors::ApiError;
 use http::{
     header::{CACHE_CONTROL, CONTENT_TYPE},
-    Response,
+    Response, StatusCode,
 };
 use serde::Serialize;
 use vercel_lambda::{error::VercelError, Body};
 
+pub mod errors;
 pub mod github;
 pub mod npm;
 
@@ -15,21 +17,34 @@ pub fn parse_url(request: &vercel_lambda::Request) -> Result<url::Url, VercelErr
         .map_err(|_| VercelError::new("Failed to parse request URI."))
 }
 
-pub fn url_has_query_flag(url: &url::Url, query: &str) -> bool {
-    for (key, val) in url.query_pairs() {
-        if key == Cow::Borrowed(query) {
-            match val.deref() {
-                "" | "1" | "true" => return true,
-                _ => return false,
-            }
+pub struct QueryParams(HashMap<String, String>);
+
+impl QueryParams {
+    pub fn get(&self, query: &str) -> Option<&String> {
+        self.0.get(query)
+    }
+
+    pub fn has_flag(&self, query: &str) -> bool {
+        match self.0.get(query).map(Deref::deref) {
+            Some("") | Some("1") | Some("true") => return true,
+            _ => return false,
         }
     }
-    false
 }
 
-pub fn json<T: Serialize>(data: T) -> Result<Response<Body>, VercelError> {
+impl From<&url::Url> for QueryParams {
+    fn from(url: &url::Url) -> Self {
+        let mut query = HashMap::new();
+        for (key, val) in url.query_pairs().into_owned() {
+            query.insert(key, val);
+        }
+        QueryParams(query)
+    }
+}
+
+pub fn ok_json<T: Serialize>(data: T) -> Result<Response<Body>, VercelError> {
     Response::builder()
-        .status(200)
+        .status(StatusCode::OK)
         .header(CONTENT_TYPE, "application/json")
         .header(CACHE_CONTROL, "public, s-maxage=1800")
         .body(Body::Text(
@@ -39,6 +54,26 @@ pub fn json<T: Serialize>(data: T) -> Result<Response<Body>, VercelError> {
         .map_err(|_| VercelError::new("Failed to build response."))
 }
 
+#[derive(Serialize)]
+struct ErrResponse {
+    message: String,
+}
+
+pub fn err_json<T: ApiError>(err: T) -> Result<Response<Body>, VercelError> {
+    eprintln!("{}", err);
+    Response::builder()
+        .status(err.status_code())
+        .header(CONTENT_TYPE, "application/json")
+        .header(CACHE_CONTROL, "no-store")
+        .body(Body::Text(
+            serde_json::to_string_pretty(&ErrResponse {
+                message: err.to_string(),
+            })
+            .map_err(|_| VercelError::new("Failed to serialize error response."))?,
+        ))
+        .map_err(|_| VercelError::new("Failed to build error response."))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -46,15 +81,15 @@ mod tests {
 
     #[test]
     fn should_parse_query_flags() {
-        let url = Url::parse(
+        let query: QueryParams = (&Url::parse(
             "https://api.mason-registry.dev/api/endpoint?do_something=1&do_something_else=true&do&not=false",
         )
-        .unwrap();
+        .unwrap()).into();
 
-        assert!(url_has_query_flag(&url, "do_something"));
-        assert!(url_has_query_flag(&url, "do_something_else"));
-        assert!(url_has_query_flag(&url, "do"));
-        assert!(!url_has_query_flag(&url, "do_nothing"));
-        assert!(!url_has_query_flag(&url, "not"));
+        assert!(query.has_flag("do_something"));
+        assert!(query.has_flag("do_something_else"));
+        assert!(query.has_flag("do"));
+        assert!(!query.has_flag("do_nothing"));
+        assert!(!query.has_flag("not"));
     }
 }

@@ -1,6 +1,6 @@
 use http::{Method, StatusCode};
 use mason_registry_api::{
-    github::{client::GitHubClient, manager::GitHubManager},
+    github::{client::GitHubClient, manager::GitHubManager, GitHubReleaseTag},
     QueryParams,
 };
 use std::{convert::TryInto, error::Error};
@@ -19,11 +19,12 @@ fn handler(request: Request) -> Result<impl IntoResponse, VercelError> {
 
     let url = mason_registry_api::parse_url(&request)?;
     let query_params: QueryParams = (&url).into();
+    let release: GitHubReleaseTag = query_params.get("release").unwrap().parse()?;
     let repo = (&query_params).try_into()?;
     let manager = GitHubManager::new(GitHubClient::new(api_key));
 
-    match manager.get_latest_release(&repo, query_params.has_flag("include_prerelease")) {
-        Ok(latest_release) => mason_registry_api::ok_json(latest_release),
+    match manager.get_release_by_tag(&repo, &release) {
+        Ok(release) => mason_registry_api::ok_json(release),
         Err(err) => mason_registry_api::err_json(err),
     }
 }

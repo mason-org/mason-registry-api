@@ -10,11 +10,10 @@ use reqwest::{
     header::{HeaderMap, ACCEPT, AUTHORIZATION, USER_AGENT},
 };
 use serde::{de::DeserializeOwned, Serialize};
-use vercel_lambda::error::VercelError;
 
 use self::{graphql::tags::TagsQuery, response::GitHubResponse, spec::GitHubReleaseDto};
 
-use super::GitHubRepo;
+use super::{GitHubReleaseTag, GitHubRepo};
 
 #[derive(Serialize)]
 pub struct GraphQLRequest<Variables: Serialize> {
@@ -26,6 +25,7 @@ enum GitHubApiEndpoint<'a> {
     GraphQL,
     Link(Link),
     Releases(&'a GitHubRepo),
+    ReleaseTag(&'a GitHubRepo, &'a GitHubReleaseTag),
 }
 
 impl<'a> GitHubApiEndpoint<'a> {
@@ -45,6 +45,10 @@ impl<'a> Display for GitHubApiEndpoint<'a> {
             GitHubApiEndpoint::Releases(repo) => {
                 f.write_fmt(format_args!("/repos/{}/{}/releases", repo.owner, repo.name))
             }
+            GitHubApiEndpoint::ReleaseTag(repo, release_tag) => f.write_fmt(format_args!(
+                "/repos/{}/{}/releases/tags/{}",
+                repo.owner, repo.name, release_tag
+            )),
         }
     }
 }
@@ -57,19 +61,6 @@ pub struct GitHubPagination {
 
 impl GitHubPagination {
     pub const MAX_PAGE_LIMIT: u8 = 100;
-    const DEFAULT_PAGE_LIMIT: u8 = 25;
-
-    pub fn with_page(page: u8) -> Self {
-        Self {
-            page,
-            per_page: Self::DEFAULT_PAGE_LIMIT,
-        }
-    }
-
-    pub fn with_page_limit(mut self, page_limit: u8) -> Self {
-        self.per_page = page_limit;
-        self
-    }
 }
 
 pub struct GitHubClient {
@@ -85,10 +76,10 @@ impl GitHubClient {
         }
     }
 
-    pub fn paginate<T, Init, Cond>(&self, init: Init, cond: Cond) -> Result<Vec<T>, VercelError>
+    pub fn paginate<T, Init, Cond>(&self, init: Init, cond: Cond) -> Result<Vec<T>, reqwest::Error>
     where
         T: DeserializeOwned,
-        Init: Fn() -> Result<GitHubResponse<Vec<T>>, VercelError>,
+        Init: Fn() -> Result<GitHubResponse<Vec<T>>, reqwest::Error>,
         Cond: Fn(&GitHubResponse<Vec<T>>) -> bool,
     {
         let mut data = Vec::with_capacity(GitHubPagination::MAX_PAGE_LIMIT.into());
@@ -101,10 +92,7 @@ impl GitHubClient {
             }
             if let Some(mut links) = response.links {
                 if let Some(next) = links.remove(&Some("next".to_owned())) {
-                    response = self
-                        .get(GitHubApiEndpoint::Link(next), None)
-                        .map_err(|_| VercelError::new("Failed to paginate."))?
-                        .try_into()?;
+                    response = self.get(GitHubApiEndpoint::Link(next), None)?.try_into()?;
                 } else {
                     break;
                 }
@@ -120,7 +108,7 @@ impl GitHubClient {
         repo: &GitHubRepo,
         first: Option<u64>,
         after: Option<String>,
-    ) -> Result<GitHubResponse<TagsQuery>, VercelError> {
+    ) -> Result<GitHubResponse<TagsQuery>, reqwest::Error> {
         self.graphql(GraphQLRequest {
             query: graphql::tags::QUERY.to_owned(),
             variables: graphql::tags::Variables {
@@ -129,13 +117,6 @@ impl GitHubClient {
                 first,
                 after,
             },
-        })
-        .map_err(|e| {
-            VercelError::new(&format!(
-                "Failed to fetch tags. {:?} {:?}",
-                e.url(),
-                e.status()
-            ))
         })?
         .try_into()
     }
@@ -144,15 +125,17 @@ impl GitHubClient {
         &self,
         repo: &GitHubRepo,
         pagination: Option<GitHubPagination>,
-    ) -> Result<GitHubResponse<Vec<GitHubReleaseDto>>, VercelError> {
-        self.get(GitHubApiEndpoint::Releases(repo), pagination)
-            .map_err(|e| {
-                VercelError::new(&format!(
-                    "Failed to fetch releases. {:?} {:?}",
-                    e.url(),
-                    e.status()
-                ))
-            })?
+    ) -> Result<GitHubResponse<Vec<GitHubReleaseDto>>, reqwest::Error> {
+        self.get(GitHubApiEndpoint::Releases(repo), pagination)?
+            .try_into()
+    }
+
+    pub fn fetch_release_by_tag(
+        &self,
+        repo: &GitHubRepo,
+        release: &GitHubReleaseTag,
+    ) -> Result<GitHubResponse<GitHubReleaseDto>, reqwest::Error> {
+        self.get(GitHubApiEndpoint::ReleaseTag(&repo, &release), None)?
             .try_into()
     }
 

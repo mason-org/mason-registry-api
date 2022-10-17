@@ -5,6 +5,7 @@ authors = ["William Boman <william@redwill.se>"]
 edition = "2018"
 
 [dependencies]
+thiserror = "1.0"
 http = "0.1"
 parse_link_header = "0.3.2"
 reqwest = { version = "0.11", features = ["blocking", "json"] }
@@ -21,6 +22,10 @@ path = "repo/[owner]/[name]/releases/latest.rs"
 [[bin]]
 name = "repo-releases-all"
 path = "repo/[owner]/[name]/releases/all.rs"
+
+[[bin]]
+name = "repo-releases-release"
+path = "repo/[owner]/[name]/releases/[release].rs"
 
 [[bin]]
 name = "repo-tags-latest"

@@ -1,8 +1,11 @@
-use std::{collections::HashMap, convert::TryFrom};
+use std::convert::TryFrom;
 
 use vercel_lambda::error::VercelError;
 
+use crate::QueryParams;
+
 pub mod client;
+pub mod errors;
 pub mod manager;
 
 #[derive(Debug)]
@@ -11,15 +14,10 @@ pub struct NpmPackage {
     pub name: String,
 }
 
-impl TryFrom<&url::Url> for NpmPackage {
+impl TryFrom<&QueryParams> for NpmPackage {
     type Error = VercelError;
 
-    fn try_from(url: &url::Url) -> Result<Self, Self::Error> {
-        let mut query = HashMap::new();
-        for (key, val) in url.query_pairs().into_owned() {
-            query.insert(key, val);
-        }
-
+    fn try_from(query: &QueryParams) -> Result<Self, Self::Error> {
         match (query.get("scope"), query.get("package")) {
             (Some(scope), Some(name)) if *scope == "_" => Ok(Self {
                 scope: None,

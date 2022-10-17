@@ -1,9 +1,11 @@
 use std::cmp::Ordering;
 
-use vercel_lambda::error::VercelError;
-
 use super::{
-    client::{spec::NpmAbbrevPackageDto, NpmClient},
+    client::{
+        spec::{NpmAbbrevPackageDto, NpmDistTag},
+        NpmClient,
+    },
+    errors::NpmError,
     NpmPackage,
 };
 
@@ -25,14 +27,21 @@ impl NpmManager {
         Self { client }
     }
 
-    pub fn get_package(&self, package: &NpmPackage) -> Result<NpmAbbrevPackageDto, VercelError> {
-        self.client.fetch_package(&package)
+    pub fn get_package(&self, package: &NpmPackage) -> Result<NpmAbbrevPackageDto, NpmError> {
+        Ok(self.client.fetch_package(&package)?)
     }
 
-    pub fn get_all_package_versions(
+    pub fn get_latest_package_version<'a>(
         &self,
-        package: &NpmPackage,
-    ) -> Result<Vec<String>, VercelError> {
+        package: &'a NpmAbbrevPackageDto,
+    ) -> Result<&'a String, NpmError> {
+        package
+            .dist_tags
+            .get(&NpmDistTag::Latest)
+            .ok_or_else(|| NpmError::ResourceNotFound { source: None })
+    }
+
+    pub fn get_all_package_versions(&self, package: &NpmPackage) -> Result<Vec<String>, NpmError> {
         let npm_package = self.get_package(package)?;
         let mut versions: Vec<String> = npm_package.versions.into_keys().collect();
         // https://github.com/npm/cli/blob/32336f6efe06bd52de1dc67c0f812d4705533ef2/lib/commands/view.js#L54
@@ -43,6 +52,8 @@ impl NpmManager {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
     use super::*;
 
     #[test]
@@ -74,5 +85,21 @@ mod tests {
             ],
             input
         )
+    }
+
+    #[test]
+    fn should_return_latest_package_version() -> Result<(), NpmError> {
+        let manager = NpmManager::new(NpmClient::new());
+        let package = NpmAbbrevPackageDto {
+            name: "foobar".to_owned(),
+            dist_tags: HashMap::from([
+                (NpmDistTag::Next, "14.0.0-pre.1".to_owned()),
+                (NpmDistTag::Latest, "13.3.7".to_owned()),
+            ]),
+            versions: HashMap::new(),
+        };
+        let latest_version = manager.get_latest_package_version(&package)?;
+        assert_eq!("13.3.7".to_owned(), *latest_version);
+        Ok(())
     }
 }

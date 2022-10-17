@@ -7,7 +7,6 @@ use reqwest::{
     header::{HeaderMap, ACCEPT, USER_AGENT},
 };
 use serde::Serialize;
-use vercel_lambda::error::VercelError;
 
 use self::spec::NpmAbbrevPackageDto;
 
@@ -86,10 +85,10 @@ impl NpmClient {
             .send()
     }
 
-    pub fn fetch_package(&self, package: &NpmPackage) -> Result<NpmAbbrevPackageDto, VercelError> {
-        self.get(NpmEndpoint::Package(package))
-            .map_err(|_| VercelError::new("Failed to fetch npm package."))?
-            .json()
-            .map_err(|_| VercelError::new("Failed to parse JSON."))
+    pub fn fetch_package(
+        &self,
+        package: &NpmPackage,
+    ) -> Result<NpmAbbrevPackageDto, reqwest::Error> {
+        self.get(NpmEndpoint::Package(package))?.json()
     }
 }

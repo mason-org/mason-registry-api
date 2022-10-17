@@ -1,41 +1,17 @@
 use http::{Method, StatusCode};
 use mason_registry_api::{
-    npm::{
-        client::{
-            spec::{NpmAbbrevPackageDto, NpmDistTag},
-            NpmClient,
-        },
-        manager::NpmManager,
-    },
-    parse_url,
+    npm::{client::NpmClient, manager::NpmManager},
+    parse_url, QueryParams,
 };
 use serde::Serialize;
-use std::{
-    convert::{TryFrom, TryInto},
-    error::Error,
-};
+use std::{convert::TryInto, error::Error};
 
 use vercel_lambda::{error::VercelError, lambda, Body, IntoResponse, Request, Response};
 
 #[derive(Serialize)]
-struct LatestVersionResponse {
-    name: String,
-    version: String,
-}
-
-impl TryFrom<NpmAbbrevPackageDto> for LatestVersionResponse {
-    type Error = VercelError;
-
-    fn try_from(value: NpmAbbrevPackageDto) -> Result<Self, Self::Error> {
-        Ok(Self {
-            name: value.name,
-            version: value
-                .dist_tags
-                .get(&NpmDistTag::Latest)
-                .ok_or_else(|| VercelError::new("Unable to find latest dist-tag."))?
-                .to_string(),
-        })
-    }
+struct LatestVersionResponse<'a> {
+    name: &'a String,
+    version: &'a String,
 }
 
 fn handler(request: Request) -> Result<impl IntoResponse, VercelError> {
@@ -46,10 +22,18 @@ fn handler(request: Request) -> Result<impl IntoResponse, VercelError> {
     }
 
     let url = parse_url(&request)?;
-    let npm_package = (&url).try_into()?;
+    let query_params: QueryParams = (&url).into();
+    let npm_package = (&query_params).try_into()?;
     let manager = NpmManager::new(NpmClient::new());
     let package = manager.get_package(&npm_package)?;
-    mason_registry_api::json::<LatestVersionResponse>(package.try_into()?)
+
+    match manager.get_latest_package_version(&package) {
+        Ok(version) => mason_registry_api::ok_json(LatestVersionResponse {
+            name: &package.name,
+            version,
+        }),
+        Err(err) => mason_registry_api::err_json(err),
+    }
 }
 
 // Start the runtime with the handler

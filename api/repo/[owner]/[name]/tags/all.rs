@@ -7,7 +7,7 @@ use mason_registry_api::{
         },
         manager::GitHubManager,
     },
-    parse_url,
+    parse_url, QueryParams,
 };
 use serde::Serialize;
 use std::{convert::TryInto, error::Error};
@@ -34,11 +34,14 @@ fn handler(request: Request) -> Result<impl IntoResponse, VercelError> {
     }
 
     let url = parse_url(&request)?;
-    let repo = (&url).try_into()?;
+    let query_params: QueryParams = (&url).into();
+    let repo = (&query_params).try_into()?;
     let manager = GitHubManager::new(GitHubClient::new(api_key));
-    let tags = manager.get_all_tags(&repo)?;
 
-    mason_registry_api::json::<TagsResponse>(tags.into())
+    match manager.get_all_tags(&repo) {
+        Ok(tags) => mason_registry_api::ok_json::<TagsResponse>(tags.into()),
+        Err(err) => mason_registry_api::err_json(err),
+    }
 }
 
 // Start the runtime with the handler

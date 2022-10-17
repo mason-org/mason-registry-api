@@ -1,8 +1,10 @@
 use http::{Method, StatusCode};
-use mason_registry_api::github::{
-    client::{spec::GitHubReleaseDto, GitHubClient},
-    manager::GitHubManager,
-    GitHubRepo,
+use mason_registry_api::{
+    github::{
+        client::{spec::GitHubReleaseDto, GitHubClient},
+        manager::GitHubManager,
+    },
+    QueryParams,
 };
 use serde::Serialize;
 use std::{convert::TryInto, error::Error};
@@ -29,11 +31,14 @@ fn handler(request: Request) -> Result<impl IntoResponse, VercelError> {
     }
 
     let url = mason_registry_api::parse_url(&request)?;
-    let repo: GitHubRepo = (&url).try_into()?;
+    let query_params: QueryParams = (&url).into();
+    let repo = (&query_params).try_into()?;
     let manager = GitHubManager::new(GitHubClient::new(api_key));
-    let releases = manager.get_all_releases(&repo)?;
 
-    mason_registry_api::json::<ReleasesResponse>(releases.into())
+    match manager.get_all_releases(&repo) {
+        Ok(releases) => mason_registry_api::ok_json::<ReleasesResponse>(releases.into()),
+        Err(err) => mason_registry_api::err_json(err),
+    }
 }
 
 // Start the runtime with the handler
