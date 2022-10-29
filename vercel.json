@@ -5,6 +5,9 @@
     },
     "api/npm/**/*.rs": {
       "runtime": "vercel-rust@3.1.2"
+    },
+    "api/pypi/**/*.rs": {
+      "runtime": "vercel-rust@3.1.2"
     }
   },
   "rewrites": [

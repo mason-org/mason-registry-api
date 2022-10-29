@@ -2,7 +2,7 @@ pub mod client;
 pub mod errors;
 pub mod manager;
 
-use std::{convert::TryFrom, fmt::Display, str::FromStr};
+use std::{fmt::Display, str::FromStr};
 
 use vercel_lambda::error::VercelError;
 
@@ -20,17 +20,15 @@ impl Display for GitHubRepo {
     }
 }
 
-impl TryFrom<&QueryParams> for GitHubRepo {
-    type Error = VercelError;
-
-    fn try_from(query: &QueryParams) -> Result<Self, Self::Error> {
+impl From<&QueryParams> for GitHubRepo {
+    fn from(query: &QueryParams) -> Self {
         match (query.get("owner"), query.get("name")) {
-            (Some(owner), Some(name)) => Ok(Self {
+            (Some(owner), Some(name)) => Self {
                 owner: owner.to_owned(),
                 name: name.to_owned(),
-            }),
+            },
             (Some(_), None) | (None, None) | (None, Some(_)) => {
-                Err(VercelError::new("Failed to parse npm package from URL."))
+                panic!("Failed to parse GitHub repo from URL.")
             }
         }
     }

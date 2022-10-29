@@ -4,7 +4,7 @@ use mason_registry_api::{
     parse_url, QueryParams,
 };
 
-use std::{convert::TryInto, error::Error};
+use std::error::Error;
 
 use vercel_lambda::{error::VercelError, lambda, Body, IntoResponse, Request, Response};
 
@@ -17,7 +17,7 @@ fn handler(request: Request) -> Result<impl IntoResponse, VercelError> {
 
     let url = parse_url(&request)?;
     let query_params: QueryParams = (&url).into();
-    let npm_package = (&query_params).try_into()?;
+    let npm_package = (&query_params).into();
     let version = query_params.get("version").unwrap();
     let manager = NpmManager::new(NpmClient::new());
 

@@ -4,7 +4,7 @@ use mason_registry_api::{
     github::{client::GitHubClient, manager::GitHubManager, GitHubTag},
     QueryParams,
 };
-use std::{convert::TryInto, error::Error};
+use std::error::Error;
 
 use vercel_lambda::{error::VercelError, lambda, Body, IntoResponse, Request, Response};
 
@@ -21,7 +21,7 @@ fn handler(request: Request) -> Result<impl IntoResponse, VercelError> {
     let url = mason_registry_api::parse_url(&request)?;
     let query_params: QueryParams = (&url).into();
     let tag: GitHubTag = query_params.get("tag").unwrap().parse()?;
-    let repo = (&query_params).try_into()?;
+    let repo = (&query_params).into();
     let manager = GitHubManager::new(GitHubClient::new(api_key));
 
     match manager.get_ref(&repo, &tag) {

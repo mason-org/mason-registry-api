@@ -50,3 +50,15 @@ path = "npm/[scope]/[package]/versions/all.rs"
 [[bin]]
 name = "npm-versions-version"
 path = "npm/[scope]/[package]/versions/[version].rs"
+
+[[bin]]
+name = "pypi-versions-latest"
+path = "pypi/[package]/versions/latest.rs"
+
+[[bin]]
+name = "pypi-versions-all"
+path = "pypi/[package]/versions/all.rs"
+
+[[bin]]
+name = "pypi-versions-version"
+path = "pypi/[package]/versions/[version].rs"

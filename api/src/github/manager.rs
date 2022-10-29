@@ -19,6 +19,7 @@ impl GitHubManager {
         Self { client }
     }
 
+    /// Returns all tags in DESCENDING order.
     pub fn get_all_tags(&self, repo: &GitHubRepo) -> Result<Vec<Edge<TagNode>>, GitHubError> {
         let mut all_tags: Vec<Edge<TagNode>> = vec![];
         let mut cursor = None;
@@ -58,6 +59,7 @@ impl GitHubManager {
         Ok(tag.data)
     }
 
+    /// Returns all releases in DESCENDING order.
     pub fn get_all_releases(
         &self,
         repo: &GitHubRepo,
