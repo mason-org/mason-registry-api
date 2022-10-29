@@ -1,18 +1,16 @@
 use std::cmp::Ordering;
 
 use super::{
-    client::{spec::PyPiProjectDto, PyPiClient},
+    client::{
+        spec::{PyPiProjectDto, PyPiProjectVersionedDto},
+        PyPiClient,
+    },
     errors::PyPiError,
     PyPiPackage,
 };
 
 pub struct PyPiManager {
     client: PyPiClient,
-}
-
-pub enum PyPiPackageVersion<'a> {
-    Version(&'a String),
-    Latest,
 }
 
 fn maybe_semver_sort_desc(a: &String, b: &String) -> Ordering {
@@ -30,17 +28,16 @@ impl PyPiManager {
         Self { client }
     }
 
-    pub fn get_project(
+    pub fn get_project(&self, package: &PyPiPackage) -> Result<PyPiProjectDto, PyPiError> {
+        Ok(self.client.fetch_project(package)?)
+    }
+
+    pub fn get_project_version(
         &self,
         package: &PyPiPackage,
-        version: PyPiPackageVersion,
-    ) -> Result<PyPiProjectDto, PyPiError> {
-        match version {
-            PyPiPackageVersion::Latest => Ok(self.client.fetch_project(package)?),
-            PyPiPackageVersion::Version(version) => {
-                Ok(self.client.fetch_project_version(package, version)?)
-            }
-        }
+        version: &str,
+    ) -> Result<PyPiProjectVersionedDto, PyPiError> {
+        Ok(self.client.fetch_project_version(&package, version)?)
     }
 
     /// Returns all package versions in DESCENDING order.

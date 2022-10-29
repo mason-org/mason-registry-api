@@ -10,9 +10,13 @@ pub struct PyPiProjectInfoDto {
     pub license: Option<String>, // probably not an option idk
 }
 
-
 #[derive(Deserialize)]
 pub struct PyPiProjectDto {
     pub info: PyPiProjectInfoDto,
-    pub releases: HashMap<String, Value>
+    pub releases: HashMap<String, Value>,
+}
+
+#[derive(Deserialize)]
+pub struct PyPiProjectVersionedDto {
+    pub info: PyPiProjectInfoDto,
 }

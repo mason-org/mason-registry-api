@@ -1,10 +1,7 @@
 use http::{Method, StatusCode};
 use mason_registry_api::{
     parse_url,
-    pypi::{
-        client::PyPiClient,
-        manager::{PyPiManager, PyPiPackageVersion},
-    },
+    pypi::{client::PyPiClient, manager::PyPiManager},
     QueryParams,
 };
 
@@ -25,7 +22,7 @@ fn handler(request: Request) -> Result<impl IntoResponse, VercelError> {
     let version = query_params.get("version").unwrap();
     let manager = PyPiManager::new(PyPiClient::new());
 
-    match manager.get_project(&pypi_package, PyPiPackageVersion::Version(version)) {
+    match manager.get_project_version(&pypi_package, version) {
         Ok(package) => mason_registry_api::ok_json(package.info),
         Err(err) => mason_registry_api::err_json(err),
     }

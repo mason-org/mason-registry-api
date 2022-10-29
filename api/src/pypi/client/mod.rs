@@ -6,7 +6,7 @@ use reqwest::{
 };
 use serde::Serialize;
 
-use self::spec::PyPiProjectDto;
+use self::spec::{PyPiProjectDto, PyPiProjectVersionedDto};
 
 use super::PyPiPackage;
 
@@ -60,9 +60,8 @@ impl PyPiClient {
     }
 
     fn get(&self, endpoint: PyPiEndpoint) -> Result<Response, reqwest::Error> {
-        let endd = endpoint.as_full_url();
         self.client
-            .get(endd)
+            .get(endpoint.as_full_url())
             .headers(self.headers())
             .send()
     }
@@ -88,7 +87,7 @@ impl PyPiClient {
         &self,
         project: &PyPiPackage,
         version: &str,
-    ) -> Result<PyPiProjectDto, reqwest::Error> {
+    ) -> Result<PyPiProjectVersionedDto, reqwest::Error> {
         self.get(PyPiEndpoint::ProjectVersion(project, version))?
             .json()
     }
