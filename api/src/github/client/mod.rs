@@ -200,7 +200,8 @@ impl GitHubClient {
             .get(endpoint.as_full_url())
             .query(&query)
             .headers(self.headers())
-            .send()
+            .send()?
+            .error_for_status()
     }
 
     fn post<Json: Serialize>(
@@ -212,6 +213,7 @@ impl GitHubClient {
             .post(endpoint.as_full_url())
             .headers(self.headers())
             .json(json)
-            .send()
+            .send()?
+            .error_for_status()
     }
 }

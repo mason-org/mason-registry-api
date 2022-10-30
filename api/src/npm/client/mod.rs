@@ -69,7 +69,8 @@ impl NpmClient {
         self.client
             .get(endpoint.as_full_url())
             .headers(self.headers())
-            .send()
+            .send()?
+            .error_for_status()
     }
 
     #[allow(dead_code)]
@@ -82,7 +83,8 @@ impl NpmClient {
             .post(endpoint.as_full_url())
             .headers(self.headers())
             .json(json)
-            .send()
+            .send()?
+            .error_for_status()
     }
 
     pub fn fetch_package(

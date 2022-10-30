@@ -26,9 +26,7 @@ impl<'a> PyPiEndpoint<'a> {
 impl<'a> Display for PyPiEndpoint<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            PyPiEndpoint::Project(project) => {
-                f.write_fmt(format_args!("{}/json", project.name))
-            }
+            PyPiEndpoint::Project(project) => f.write_fmt(format_args!("{}/json", project.name)),
             PyPiEndpoint::ProjectVersion(project, version) => {
                 f.write_fmt(format_args!("{}/{}/json", project.name, version))
             }
@@ -63,7 +61,8 @@ impl PyPiClient {
         self.client
             .get(endpoint.as_full_url())
             .headers(self.headers())
-            .send()
+            .send()?
+            .error_for_status()
     }
 
     #[allow(dead_code)]
@@ -76,7 +75,8 @@ impl PyPiClient {
             .post(endpoint.as_full_url())
             .headers(self.headers())
             .json(json)
-            .send()
+            .send()?
+            .error_for_status()
     }
 
     pub fn fetch_project(&self, project: &PyPiPackage) -> Result<PyPiProjectDto, reqwest::Error> {
