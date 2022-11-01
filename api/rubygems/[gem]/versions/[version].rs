@@ -1,16 +1,15 @@
 use http::{Method, StatusCode};
 use mason_registry_api::{
-    github::{api::TagResponse, client::GitHubClient, manager::GitHubManager, GitHubRepo},
-    parse_url, QueryParams,
+    parse_url,
+    rubygems::{api::RubyGemResponse, client::RubyGemsClient, manager::RubyGemsManager},
+    QueryParams,
 };
+
 use std::error::Error;
 
 use vercel_lambda::{error::VercelError, lambda, Body, IntoResponse, Request, Response};
 
 fn handler(request: Request) -> Result<impl IntoResponse, VercelError> {
-    let api_key: String =
-        std::env::var("GITHUB_API_KEY").map_err(|e| VercelError::new(&format!("{}", e)))?;
-
     if request.method() != Method::GET {
         return Ok(Response::builder()
             .status(StatusCode::METHOD_NOT_ALLOWED)
@@ -19,11 +18,15 @@ fn handler(request: Request) -> Result<impl IntoResponse, VercelError> {
 
     let url = parse_url(&request)?;
     let query_params: QueryParams = (&url).into();
-    let repo: GitHubRepo = (&query_params).into();
-    let manager = GitHubManager::new(GitHubClient::new(api_key));
+    let gem = (&query_params).into();
+    let version = query_params.get("version").unwrap();
+    let manager = RubyGemsManager::new(RubyGemsClient::new());
 
-    match manager.get_latest_tag(&repo) {
-        Ok(latest_tag) => mason_registry_api::ok_json::<TagResponse>(latest_tag.into()),
+    match manager.get_gem_version(&gem, version) {
+        Ok(versioned_gem) => mason_registry_api::ok_json(RubyGemResponse::from_versioned_dto(
+            gem.name,
+            versioned_gem,
+        )),
         Err(err) => mason_registry_api::err_json(err),
     }
 }

@@ -1,7 +1,6 @@
 use http::{Method, StatusCode};
 use mason_registry_api::{
-    api::TagResponse,
-    github::{client::GitHubClient, manager::GitHubManager, GitHubTag},
+    github::{api::TagResponse, client::GitHubClient, manager::GitHubManager, GitHubTag},
     QueryParams,
 };
 use std::error::Error;

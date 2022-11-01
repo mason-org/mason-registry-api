@@ -62,3 +62,15 @@ path = "pypi/[package]/versions/all.rs"
 [[bin]]
 name = "pypi-versions-version"
 path = "pypi/[package]/versions/[version].rs"
+
+[[bin]]
+name = "rubygems-versions-latest"
+path = "rubygems/[gem]/versions/latest.rs"
+
+[[bin]]
+name = "rubygems-versions-all"
+path = "rubygems/[gem]/versions/all.rs"
+
+[[bin]]
+name = "rubygems-versions-version"
+path = "rubygems/[gem]/versions/[version].rs"

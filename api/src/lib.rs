@@ -8,11 +8,11 @@ use http::{
 use serde::Serialize;
 use vercel_lambda::{error::VercelError, Body};
 
-pub mod api;
 pub mod errors;
 pub mod github;
 pub mod npm;
 pub mod pypi;
+pub mod rubygems;
 
 pub fn parse_url(request: &vercel_lambda::Request) -> Result<url::Url, VercelError> {
     url::Url::parse(&request.uri().to_string())
