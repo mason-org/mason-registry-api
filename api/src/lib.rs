@@ -11,6 +11,7 @@ use vercel_lambda::{error::VercelError, Body};
 pub mod errors;
 pub mod github;
 pub mod npm;
+pub mod packagist;
 pub mod pypi;
 pub mod rubygems;
 

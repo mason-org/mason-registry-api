@@ -74,3 +74,15 @@ path = "rubygems/[gem]/versions/all.rs"
 [[bin]]
 name = "rubygems-versions-version"
 path = "rubygems/[gem]/versions/[version].rs"
+
+[[bin]]
+name = "packagist-versions-latest"
+path = "packagist/[vendor]/[package]/versions/latest.rs"
+
+[[bin]]
+name = "packagist-versions-all"
+path = "packagist/[vendor]/[package]/versions/all.rs"
+
+[[bin]]
+name = "packagist-versions-version"
+path = "packagist/[vendor]/[package]/versions/[version].rs"
