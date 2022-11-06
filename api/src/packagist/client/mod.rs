@@ -45,10 +45,9 @@ impl PackagistClient {
 
     fn headers(&self) -> HeaderMap {
         let mut headers = HeaderMap::new();
-        // Accept abbreviated responses, see https://github.com/npm/registry/blob/master/docs/responses/package-metadata.md
         headers.insert(
             ACCEPT,
-            "application/vnd.npm.install-v1+json; q=1.0, application/json; q=0.8"
+            "application/json"
                 .parse()
                 .unwrap(),
         );
