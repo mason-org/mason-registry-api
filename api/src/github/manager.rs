@@ -31,10 +31,8 @@ impl GitHubManager {
             let mut tags = response.data.tags;
             all_tags.append(&mut tags);
 
-            // cursor = response.data.page_info.end_cursor;
-            // if !response.data.page_info.has_next_page {
-            cursor = None;
-            if true {
+            cursor = response.data.page_info.end_cursor;
+            if !response.data.page_info.has_next_page {
                 return Ok(all_tags);
             }
         }
@@ -53,10 +51,8 @@ impl GitHubManager {
             let mut sponsors = response.data.sponsors;
             all_sponsors.append(&mut sponsors);
 
-            // cursor = response.data.page_info.end_cursor;
-            // if !response.data.page_info.has_next_page {
-            cursor = None;
-            if true {
+            cursor = response.data.page_info.end_cursor;
+            if !response.data.page_info.has_next_page {
                 return Ok(all_sponsors);
             }
         }
