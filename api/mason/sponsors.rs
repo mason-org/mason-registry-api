@@ -1,22 +1,24 @@
 use http::{Method, StatusCode};
-use mason_registry_api::{
-    github::{
-        client::{graphql::tags::Tag, GitHubClient},
-        manager::GitHubManager,
-    },
-    parse_url, QueryParams,
+use mason_registry_api::github::{
+    client::{graphql::sponsors::Sponsor, GitHubClient},
+    manager::GitHubManager,
 };
 use serde::Serialize;
+
 use std::error::Error;
 
 use vercel_lambda::{error::VercelError, lambda, Body, IntoResponse, Request, Response};
 
 #[derive(Serialize)]
-struct TagsResponse(Vec<String>);
+pub struct SponsorsResponse {
+    pub current_sponsors: Vec<String>,
+}
 
-impl From<Vec<Tag>> for TagsResponse {
-    fn from(tags: Vec<Tag>) -> Self {
-        Self(tags.into_iter().map(|t| t.name).collect())
+impl From<Vec<Sponsor>> for SponsorsResponse {
+    fn from(current_sponsors: Vec<Sponsor>) -> Self {
+        Self {
+            current_sponsors: current_sponsors.into_iter().map(|s| s.login).collect(),
+        }
     }
 }
 
@@ -30,13 +32,9 @@ fn handler(request: Request) -> Result<impl IntoResponse, VercelError> {
             .body(Body::Empty)?);
     }
 
-    let url = parse_url(&request)?;
-    let query_params: QueryParams = (&url).into();
-    let repo = (&query_params).into();
     let manager = GitHubManager::new(GitHubClient::new(api_key));
-
-    match manager.get_all_tags(&repo) {
-        Ok(tags) => mason_registry_api::ok_json::<TagsResponse>(tags.into()),
+    match manager.get_all_sponsors("williamboman".to_owned()) {
+        Ok(sponsors) => mason_registry_api::ok_json::<SponsorsResponse>(sponsors.into()),
         Err(err) => mason_registry_api::err_json(err),
     }
 }

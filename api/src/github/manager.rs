@@ -2,7 +2,7 @@ use std::collections::VecDeque;
 
 use super::{
     client::{
-        graphql::{tags::TagNode, Edge},
+        graphql::{sponsors::Sponsor, tags::Tag},
         spec::{GitHubRef, GitHubReleaseDto},
         GitHubClient, GitHubPagination,
     },
@@ -20,41 +20,58 @@ impl GitHubManager {
     }
 
     /// Returns all tags in DESCENDING order.
-    pub fn get_all_tags(&self, repo: &GitHubRepo) -> Result<Vec<Edge<TagNode>>, GitHubError> {
-        let mut all_tags: Vec<Edge<TagNode>> = vec![];
+    pub fn get_all_tags(&self, repo: &GitHubRepo) -> Result<Vec<Tag>, GitHubError> {
+        let mut all_tags: Vec<Tag> = vec![];
         let mut cursor = None;
 
         loop {
-            let response = self.client.fetch_tags(
-                &repo,
-                Some(GitHubPagination::MAX_PAGE_LIMIT.into()),
-                cursor,
-            )?;
-            cursor = response.data.tags.last().map(|t| t.cursor.to_owned());
+            let response =
+                self.client
+                    .fetch_tags(&repo, GitHubPagination::MAX_PAGE_LIMIT.into(), cursor)?;
             let mut tags = response.data.tags;
-            let tags_size = tags.len();
             all_tags.append(&mut tags);
 
-            if tags_size < GitHubPagination::MAX_PAGE_LIMIT.into() {
+            // cursor = response.data.page_info.end_cursor;
+            // if !response.data.page_info.has_next_page {
+            cursor = None;
+            if true {
                 return Ok(all_tags);
             }
         }
     }
 
-    pub fn get_latest_tag(&self, repo: &GitHubRepo) -> Result<Edge<TagNode>, GitHubError> {
-        let response = self.client.fetch_tags(&repo, Some(1), None)?;
-        let mut tags: VecDeque<Edge<TagNode>> = response.data.tags.into();
+    pub fn get_all_sponsors(&self, login: String) -> Result<Vec<Sponsor>, GitHubError> {
+        let mut all_sponsors: Vec<Sponsor> = vec![];
+        let mut cursor = None;
+
+        loop {
+            let response = self.client.fetch_sponsors(
+                login.clone(),
+                GitHubPagination::MAX_PAGE_LIMIT.into(),
+                cursor,
+            )?;
+            let mut sponsors = response.data.sponsors;
+            all_sponsors.append(&mut sponsors);
+
+            // cursor = response.data.page_info.end_cursor;
+            // if !response.data.page_info.has_next_page {
+            cursor = None;
+            if true {
+                return Ok(all_sponsors);
+            }
+        }
+    }
+
+    pub fn get_latest_tag(&self, repo: &GitHubRepo) -> Result<Tag, GitHubError> {
+        let response = self.client.fetch_tags(&repo, 1, None)?;
+        let mut tags: VecDeque<Tag> = response.data.tags.into();
         let latest_tag = tags
             .pop_front()
             .ok_or_else(|| GitHubError::ResourceNotFound { source: None })?;
         Ok(latest_tag)
     }
 
-    pub fn get_ref(
-        &self,
-        repo: &GitHubRepo,
-        tag: &GitHubTag,
-    ) -> Result<GitHubRef, GitHubError> {
+    pub fn get_ref(&self, repo: &GitHubRepo, tag: &GitHubTag) -> Result<GitHubRef, GitHubError> {
         let tag = self.client.fetch_ref(repo, tag)?;
         Ok(tag.data)
     }

@@ -1,20 +1,15 @@
 use serde::Serialize;
 
-use crate::github::client::{
-    graphql::{tags::TagNode, Edge},
-    spec::GitHubRef,
-};
+use crate::github::client::{graphql::tags::Tag, spec::GitHubRef};
 
 #[derive(Serialize)]
 pub struct TagResponse {
     pub tag: String,
 }
 
-impl From<Edge<TagNode>> for TagResponse {
-    fn from(edge: Edge<TagNode>) -> Self {
-        Self {
-            tag: edge.node.name,
-        }
+impl From<Tag> for TagResponse {
+    fn from(tag: Tag) -> Self {
+        Self { tag: tag.name }
     }
 }
 

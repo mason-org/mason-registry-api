@@ -86,3 +86,7 @@ path = "packagist/[vendor]/[package]/versions/all.rs"
 [[bin]]
 name = "packagist-versions-version"
 path = "packagist/[vendor]/[package]/versions/[version].rs"
+
+[[bin]]
+name = "mason-sponsors"
+path = "mason/sponsors.rs"

@@ -12,7 +12,7 @@ use reqwest::{
 use serde::{de::DeserializeOwned, Serialize};
 
 use self::{
-    graphql::tags::TagsQuery,
+    graphql::{tags::TagsQuery, sponsors::SponsorsQuery},
     response::GitHubResponse,
     spec::{GitHubRef, GitHubReleaseDto},
 };
@@ -116,7 +116,7 @@ impl GitHubClient {
     pub fn fetch_tags(
         &self,
         repo: &GitHubRepo,
-        first: Option<u64>,
+        first: u64,
         after: Option<String>,
     ) -> Result<GitHubResponse<TagsQuery>, reqwest::Error> {
         self.graphql(GraphQLRequest {
@@ -124,6 +124,23 @@ impl GitHubClient {
             variables: graphql::tags::Variables {
                 owner: repo.owner.clone(),
                 name: repo.name.clone(),
+                first,
+                after,
+            },
+        })?
+        .try_into()
+    }
+
+    pub fn fetch_sponsors(
+        &self,
+        login: String,
+        first: u64,
+        after: Option<String>,
+    ) -> Result<GitHubResponse<SponsorsQuery>, reqwest::Error> {
+        self.graphql(GraphQLRequest {
+            query: graphql::sponsors::QUERY.to_owned(),
+            variables: graphql::sponsors::Variables {
+                login,
                 first,
                 after,
             },
