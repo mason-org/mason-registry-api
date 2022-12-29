@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mason-org/mason-registry-api/schemas/repo/tags/tag",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["tag"],
+  "properties": {
+    "tag": {
+      "type": "string"
+    }
+  }
+}

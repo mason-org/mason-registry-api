@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mason-org/mason-registry-api/schemas/repo/releases/release",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "tag_name", "draft", "prerelease", "assets"],
+  "properties": {
+    "id": {
+      "type": "number"
+    },
+    "tag_name": {
+      "type": "string"
+    },
+    "draft": {
+      "type": "boolean"
+    },
+    "prerelease": {
+      "type": "boolean"
+    },
+    "assets": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    }
+  }
+}

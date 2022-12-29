@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mason-org/mason-registry-api/schemas/mason/sponsors",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["current_sponsors"],
+  "properties": {
+    "current_sponsors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}
