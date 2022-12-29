@@ -15,7 +15,16 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+      - uses: amondnet/vercel-action@v25.1.0
+        id: deploy
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
       - name: Run schema tests
         run: |
-          npx -y vercel dev
-          BASE_URL=http://localhost:3000 ./tests/validate-schema.sh
+          npm install -g ajv ajv-cli ajv-formats
+          ./tests/validate-schema.sh
+        env:
+          GITHUB_API_KEY: ${{ secrets.API_KEY_GITHUB }}
+          BASE_URL: ${{ steps.deploy.outputs.preview-url }}
