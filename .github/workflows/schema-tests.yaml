@@ -1,0 +1,21 @@
+---
+name: Schema tests
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  schema-test:
+    name: Run schema tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run schema tests
+        run: |
+          npx -y vercel dev
+          BASE_URL=http://localhost:3000 ./tests/validate-schema.sh
