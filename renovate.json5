@@ -1,0 +1,12 @@
+{
+  automerge: true,
+  platformAutomerge: true,
+  automergeType: "pr",
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  extends: [
+    "config:base"
+  ],
+  commitMessage: "bump({{depName}}): update to {{prettyNewVersion}}",
+  // Builds take a long time and we require branches to be up-to-date before merging.
+  prConcurrentLimit: 1,
+}
