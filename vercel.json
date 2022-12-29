@@ -40,7 +40,7 @@
   "redirects": [
     {
       "source": "/",
-      "destination": "https://github.com/williamboman/mason-registry-api",
+      "destination": "https://github.com/mason-org/mason-registry-api",
       "permanent": false
     }
   ]

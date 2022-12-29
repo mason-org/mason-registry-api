@@ -58,7 +58,7 @@ impl NpmClient {
         );
         headers.insert(
             USER_AGENT,
-            "mason-registry-api (+https://github.com/williamboman/mason-registry-api)"
+            "mason-registry-api (+https://github.com/mason-org/mason-registry-api)"
                 .parse()
                 .unwrap(),
         );
