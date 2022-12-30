@@ -819,7 +819,7 @@ dependencies = [
 name = "mason-registry-api"
 version = "1.0.0"
 dependencies = [
- "http 0.1.21",
+ "http 0.2.8",
  "parse_link_header",
  "reqwest",
  "semver 1.0.16",
