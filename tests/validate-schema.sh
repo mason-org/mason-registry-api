@@ -111,6 +111,12 @@ assert_ok_json         /api/rubygems/solargraph/versions/latest    ./schemas/ver
 assert_ok_json         /api/rubygems/solargraph/versions/0.48.0    ./schemas/versions/version.json
 assert_not_found_json  /api/rubygems/solargraph/versions/17287138
 
+# crates
+assert_ok_json         /api/crate/crates_io_api/versions/all       ./schemas/versions/all.json
+assert_ok_json         /api/crate/crates_io_api/versions/latest    ./schemas/versions/version.json
+assert_ok_json         /api/crate/crates_io_api/versions/0.8.1     ./schemas/versions/version.json
+assert_not_found_json  /api/crate/crates_io_api/versions/17287138
+
 if [[ $(wc -l "$ERRORS" | awk '{print $1}') -gt 0 ]]; then
     exit 1
 fi
