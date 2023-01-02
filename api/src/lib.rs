@@ -8,6 +8,7 @@ use http::{
 use serde::Serialize;
 use vercel_lambda::{error::VercelError, Body};
 
+pub mod crates;
 pub mod errors;
 pub mod github;
 pub mod npm;
