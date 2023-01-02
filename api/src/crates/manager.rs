@@ -21,6 +21,7 @@ impl CratesManager {
         Ok(self.client.get_crate(&crate_pkg.name)?)
     }
 
+    /// Returns all crate versions in DESCENDING order.
     pub fn get_all_crate_versions(&self, crate_pkg: Crate) -> Result<Vec<String>, CratesError> {
         let crate_response = self.get_crate(crate_pkg)?;
         return Ok(crate_response.versions.into_iter().map(|v| v.num).collect());
