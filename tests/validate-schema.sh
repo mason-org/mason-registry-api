@@ -117,6 +117,9 @@ assert_ok_json         /api/crate/crates_io_api/versions/latest    ./schemas/ver
 assert_ok_json         /api/crate/crates_io_api/versions/0.8.1     ./schemas/versions/version.json
 assert_not_found_json  /api/crate/crates_io_api/versions/17287138
 
+# golang
+assert_ok_json  /api/golang/golang.org%2Fx%2Ftools%2Fgopls/versions/all  ./schemas/versions/all.json
+
 if [[ $(wc -l "$ERRORS" | awk '{print $1}') -gt 0 ]]; then
     exit 1
 fi

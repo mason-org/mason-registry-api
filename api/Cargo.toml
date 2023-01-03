@@ -101,5 +101,9 @@ name = "packagist-versions-version"
 path = "packagist/[vendor]/[package]/versions/[version].rs"
 
 [[bin]]
+name = "golang-versions-all"
+path = "golang/[package]/versions/all.rs"
+
+[[bin]]
 name = "mason-sponsors"
 path = "mason/sponsors.rs"

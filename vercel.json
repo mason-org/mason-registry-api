@@ -7,6 +7,9 @@
     "api/crate/**/*.rs": {
       "runtime": "vercel-rust@3.1.2"
     },
+    "api/golang/**/*.rs": {
+      "runtime": "vercel-rust@3.1.2"
+    },
     "api/repo/**/*.rs": {
       "runtime": "vercel-rust@3.1.2"
     },
