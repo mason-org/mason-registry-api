@@ -1,16 +1,18 @@
 use std::{collections::HashMap, ops::Deref};
 
-use errors::ApiError;
-use http::{
+use ::http::{
     header::{CACHE_CONTROL, CONTENT_TYPE},
     Response, StatusCode,
 };
+use errors::ApiError;
 use serde::Serialize;
 use vercel_lambda::{error::VercelError, Body};
 
 pub mod crates;
 pub mod errors;
 pub mod github;
+pub mod golang;
+pub mod http;
 pub mod npm;
 pub mod packagist;
 pub mod pypi;
