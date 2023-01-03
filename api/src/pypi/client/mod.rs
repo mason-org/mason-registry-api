@@ -1,10 +1,6 @@
 use std::fmt::Display;
 
-use reqwest::{
-    blocking::{Client, Response},
-    header::{HeaderMap, ACCEPT, USER_AGENT},
-};
-use serde::Serialize;
+use crate::http::client::{Client, HttpEndpoint};
 
 use self::spec::{PyPiProjectDto, PyPiProjectVersionedDto};
 
@@ -17,7 +13,7 @@ pub enum PyPiEndpoint<'a> {
     ProjectVersion(&'a PyPiPackage, &'a str),
 }
 
-impl<'a> PyPiEndpoint<'a> {
+impl<'a> HttpEndpoint for PyPiEndpoint<'a> {
     fn as_full_url(&self) -> String {
         format!("https://pypi.org/pypi/{}", self)
     }
@@ -41,46 +37,12 @@ pub struct PyPiClient {
 impl PyPiClient {
     pub fn new() -> Self {
         Self {
-            client: reqwest::blocking::Client::new(),
+            client: Client::new(None),
         }
     }
 
-    fn headers(&self) -> HeaderMap {
-        let mut headers = HeaderMap::new();
-        headers.insert(ACCEPT, "application/json".parse().unwrap());
-        headers.insert(
-            USER_AGENT,
-            "mason-registry-api (+https://github.com/mason-org/mason-registry-api)"
-                .parse()
-                .unwrap(),
-        );
-        headers
-    }
-
-    fn get(&self, endpoint: PyPiEndpoint) -> Result<Response, reqwest::Error> {
-        self.client
-            .get(endpoint.as_full_url())
-            .headers(self.headers())
-            .send()?
-            .error_for_status()
-    }
-
-    #[allow(dead_code)]
-    fn post<Json: Serialize>(
-        &self,
-        endpoint: PyPiEndpoint,
-        json: &Json,
-    ) -> Result<Response, reqwest::Error> {
-        self.client
-            .post(endpoint.as_full_url())
-            .headers(self.headers())
-            .json(json)
-            .send()?
-            .error_for_status()
-    }
-
     pub fn fetch_project(&self, project: &PyPiPackage) -> Result<PyPiProjectDto, reqwest::Error> {
-        self.get(PyPiEndpoint::Project(project))?.json()
+        self.client.get(PyPiEndpoint::Project(project))?.json()
     }
 
     pub fn fetch_project_version(
@@ -88,7 +50,8 @@ impl PyPiClient {
         project: &PyPiPackage,
         version: &str,
     ) -> Result<PyPiProjectVersionedDto, reqwest::Error> {
-        self.get(PyPiEndpoint::ProjectVersion(project, version))?
+        self.client
+            .get(PyPiEndpoint::ProjectVersion(project, version))?
             .json()
     }
 }

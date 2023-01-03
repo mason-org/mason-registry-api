@@ -6,13 +6,15 @@ use std::{convert::TryInto, fmt::Display};
 
 use parse_link_header::Link;
 use reqwest::{
-    blocking::{Client, Response},
-    header::{HeaderMap, ACCEPT, AUTHORIZATION, USER_AGENT},
+    blocking::Response,
+    header::{HeaderMap, ACCEPT, AUTHORIZATION},
 };
 use serde::{de::DeserializeOwned, Serialize};
 
+use crate::http::client::{Client, HttpEndpoint};
+
 use self::{
-    graphql::{tags::TagsQuery, sponsors::SponsorsQuery},
+    graphql::{sponsors::SponsorsQuery, tags::TagsQuery},
     response::GitHubResponse,
     spec::{GitHubRef, GitHubReleaseDto},
 };
@@ -33,11 +35,11 @@ enum GitHubApiEndpoint<'a> {
     GitRef(&'a GitHubRepo, &'a dyn GitHubRefId),
 }
 
-impl<'a> GitHubApiEndpoint<'a> {
+impl<'a> HttpEndpoint for GitHubApiEndpoint<'a> {
     fn as_full_url(&self) -> String {
         match self {
             GitHubApiEndpoint::Link(uri) => uri.raw_uri.to_owned(),
-            endpoint => format!("https://api.github.com{}", endpoint),
+            endpoint => format!("https://api.github.com/{}", endpoint),
         }
     }
 }
@@ -45,17 +47,17 @@ impl<'a> GitHubApiEndpoint<'a> {
 impl<'a> Display for GitHubApiEndpoint<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            GitHubApiEndpoint::GraphQL => f.write_str("/graphql"),
+            GitHubApiEndpoint::GraphQL => f.write_str("graphql"),
             GitHubApiEndpoint::Link(link) => f.write_str(&link.raw_uri),
             GitHubApiEndpoint::Releases(repo) => {
-                f.write_fmt(format_args!("/repos/{}/releases", repo))
+                f.write_fmt(format_args!("repos/{}/releases", repo))
             }
             GitHubApiEndpoint::ReleaseTag(repo, release_tag) => f.write_fmt(format_args!(
-                "/repos/{}/releases/tags/{}",
+                "repos/{}/releases/tags/{}",
                 repo, release_tag
             )),
             GitHubApiEndpoint::GitRef(repo, git_ref) => f.write_fmt(format_args!(
-                "/repos/{}/git/ref/{}",
+                "repos/{}/git/ref/{}",
                 repo,
                 git_ref.get_ref_endpoint()
             )),
@@ -75,14 +77,23 @@ impl GitHubPagination {
 
 pub struct GitHubClient {
     client: Client,
-    api_key: String,
 }
 
 impl GitHubClient {
     pub fn new(api_key: String) -> Self {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            ACCEPT,
+            "application/vnd.github.v3+json; q=1.0, application/json; q=0.8"
+                .parse()
+                .unwrap(),
+        );
+        headers.insert(
+            AUTHORIZATION,
+            format!("Bearer {}", api_key).parse().unwrap(),
+        );
         GitHubClient {
-            api_key,
-            client: reqwest::blocking::Client::new(),
+            client: Client::new(Some(headers)),
         }
     }
 
@@ -102,7 +113,7 @@ impl GitHubClient {
             }
             if let Some(mut links) = response.links {
                 if let Some(next) = links.remove(&Some("next".to_owned())) {
-                    response = self.get(GitHubApiEndpoint::Link(next), None)?.try_into()?;
+                    response = self.client.get(GitHubApiEndpoint::Link(next))?.try_into()?;
                 } else {
                     break;
                 }
@@ -153,7 +164,8 @@ impl GitHubClient {
         repo: &GitHubRepo,
         ref_id: &GitRef,
     ) -> Result<GitHubResponse<GitHubRef>, reqwest::Error> {
-        self.get(GitHubApiEndpoint::GitRef(repo, ref_id), None)?
+        self.client
+            .get(GitHubApiEndpoint::GitRef(repo, ref_id))?
             .try_into()
     }
 
@@ -162,8 +174,13 @@ impl GitHubClient {
         repo: &GitHubRepo,
         pagination: Option<GitHubPagination>,
     ) -> Result<GitHubResponse<Vec<GitHubReleaseDto>>, reqwest::Error> {
-        self.get(GitHubApiEndpoint::Releases(repo), pagination)?
-            .try_into()
+        match pagination {
+            Some(pagination) => {
+                self.get_with_pagination(GitHubApiEndpoint::Releases(repo), pagination)
+            }
+            None => self.client.get(GitHubApiEndpoint::Releases(repo)),
+        }?
+        .try_into()
     }
 
     pub fn fetch_release_by_tag(
@@ -171,66 +188,24 @@ impl GitHubClient {
         repo: &GitHubRepo,
         release: &GitHubTag,
     ) -> Result<GitHubResponse<GitHubReleaseDto>, reqwest::Error> {
-        self.get(GitHubApiEndpoint::ReleaseTag(&repo, &release), None)?
+        self.client
+            .get(GitHubApiEndpoint::ReleaseTag(&repo, &release))?
             .try_into()
-    }
-
-    fn headers(&self) -> HeaderMap {
-        let mut headers = HeaderMap::new();
-        headers.insert(
-            ACCEPT,
-            "application/vnd.github.v3+json; q=1.0, application/json; q=0.8"
-                .parse()
-                .unwrap(),
-        );
-        headers.insert(
-            AUTHORIZATION,
-            format!("Bearer {}", self.api_key).parse().unwrap(),
-        );
-        headers.insert(
-            USER_AGENT,
-            "mason-registry-api (+https://github.com/mason-org/mason-registry-api)"
-                .parse()
-                .unwrap(),
-        );
-        headers
     }
 
     fn graphql<Variables: Serialize>(
         &self,
         request: GraphQLRequest<Variables>,
     ) -> Result<Response, reqwest::Error> {
-        self.post(GitHubApiEndpoint::GraphQL, &request)
+        self.client.post(GitHubApiEndpoint::GraphQL, &request)
     }
 
-    fn get(
+    fn get_with_pagination(
         &self,
         endpoint: GitHubApiEndpoint,
-        pagination: Option<GitHubPagination>,
+        pagination: GitHubPagination,
     ) -> Result<Response, reqwest::Error> {
-        let query = match pagination {
-            Some(pagination) => vec![("page", pagination.page), ("per_page", pagination.per_page)],
-
-            None => vec![],
-        };
-        self.client
-            .get(endpoint.as_full_url())
-            .query(&query)
-            .headers(self.headers())
-            .send()?
-            .error_for_status()
-    }
-
-    fn post<Json: Serialize>(
-        &self,
-        endpoint: GitHubApiEndpoint,
-        json: &Json,
-    ) -> Result<Response, reqwest::Error> {
-        self.client
-            .post(endpoint.as_full_url())
-            .headers(self.headers())
-            .json(json)
-            .send()?
-            .error_for_status()
+        let query = vec![("page", pagination.page), ("per_page", pagination.per_page)];
+        self.client.get_with_query(endpoint, &query)
     }
 }
