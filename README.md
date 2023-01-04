@@ -1,9 +1,8 @@
 # mason-registry-api
 
-Public edge-cached API for
+Public, edge-cached, API for
 [mason.nvim](https://github.com/williamboman/mason.nvim) that exposes
-convenience APIs for tasks that are either complicated to achieve on the
-client-side or are very "hot" (i.e. requests being made frequently).
+convenience APIs for interacting with the Mason registry.
 
 # Endpoints
 
