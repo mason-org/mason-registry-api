@@ -44,6 +44,17 @@
       "destination": "/api/repo/:owner/:name/tags/latest"
     }
   ],
+  "headers": [
+    {
+      "source": "/api/repo/mason-org/mason-registry/releases/latest",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "s-maxage=60, stale-while-revalidate=60"
+        }
+      ]
+    }
+  ],
   "redirects": [
     {
       "source": "/",
