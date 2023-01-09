@@ -24,7 +24,10 @@ fn handler(request: Request) -> Result<impl IntoResponse, VercelError> {
     let manager = GitHubManager::new(GitHubClient::new(api_key));
 
     match manager.get_ref(&repo, &tag) {
-        Ok(github_ref) => mason_registry_api::ok_json::<TagResponse>(github_ref.into()),
+        Ok(github_ref) => mason_registry_api::ok_json::<TagResponse>(
+            github_ref.into(),
+            mason_registry_api::CacheControl::PublicMedium,
+        ),
         Err(err) => mason_registry_api::err_json(err),
     }
 }

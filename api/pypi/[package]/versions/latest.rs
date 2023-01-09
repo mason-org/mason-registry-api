@@ -21,7 +21,10 @@ fn handler(request: Request) -> Result<impl IntoResponse, VercelError> {
     let manager = PyPiManager::new(PyPiClient::new());
 
     match manager.get_project(&pypi_package) {
-        Ok(package) => mason_registry_api::ok_json(package.info),
+        Ok(package) => mason_registry_api::ok_json(
+            package.info,
+            mason_registry_api::CacheControl::PublicMedium,
+        ),
         Err(err) => mason_registry_api::err_json(err),
     }
 }

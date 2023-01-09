@@ -36,7 +36,10 @@ fn handler(request: Request) -> Result<impl IntoResponse, VercelError> {
     let manager = GitHubManager::new(GitHubClient::new(api_key));
 
     match manager.get_all_releases(&repo) {
-        Ok(releases) => mason_registry_api::ok_json::<ReleasesResponse>(releases.into()),
+        Ok(releases) => mason_registry_api::ok_json::<ReleasesResponse>(
+            releases.into(),
+            mason_registry_api::CacheControl::PublicMedium,
+        ),
         Err(err) => mason_registry_api::err_json(err),
     }
 }

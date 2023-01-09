@@ -48,16 +48,37 @@ impl From<&url::Url> for QueryParams {
     }
 }
 
-pub fn ok_json<T: Serialize>(data: T) -> Result<Response<Body>, VercelError> {
+pub enum CacheControl {
+    NoStore,
+    PublicShort,
+    PublicMedium,
+}
+
+fn json_response<T: Serialize>(
+    status: StatusCode,
+    cache: CacheControl,
+    data: &T,
+) -> Result<Response<Body>, VercelError> {
     Response::builder()
-        .status(StatusCode::OK)
+        .status(status)
         .header(CONTENT_TYPE, "application/json")
-        .header(CACHE_CONTROL, "public, s-maxage=1800")
+        .header(
+            CACHE_CONTROL,
+            match cache {
+                CacheControl::NoStore => "no-store",
+                CacheControl::PublicShort => "s-maxage=60, stale-while-revalidate=120",
+                CacheControl::PublicMedium => "s-maxage=1800",
+            },
+        )
         .body(Body::Text(
-            serde_json::to_string_pretty(&data)
+            serde_json::to_string_pretty(data)
                 .map_err(|_| VercelError::new("Failed to serialize."))?,
         ))
         .map_err(|_| VercelError::new("Failed to build response."))
+}
+
+pub fn ok_json<T: Serialize>(data: T, cache: CacheControl) -> Result<Response<Body>, VercelError> {
+    json_response(StatusCode::OK, cache, &data)
 }
 
 #[derive(Serialize)]
@@ -67,17 +88,13 @@ struct ErrResponse {
 
 pub fn err_json<T: ApiError>(err: T) -> Result<Response<Body>, VercelError> {
     eprintln!("{}", err);
-    Response::builder()
-        .status(err.status_code())
-        .header(CONTENT_TYPE, "application/json")
-        .header(CACHE_CONTROL, "no-store")
-        .body(Body::Text(
-            serde_json::to_string_pretty(&ErrResponse {
-                message: err.to_string(),
-            })
-            .map_err(|_| VercelError::new("Failed to serialize error response."))?,
-        ))
-        .map_err(|_| VercelError::new("Failed to build error response."))
+    json_response(
+        err.status_code(),
+        CacheControl::NoStore,
+        &ErrResponse {
+            message: err.to_string(),
+        },
+    )
 }
 
 #[cfg(test)]

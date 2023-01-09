@@ -21,10 +21,13 @@ fn handler(request: Request) -> Result<impl IntoResponse, VercelError> {
     let manager = CratesManager::new();
 
     match manager.get_crate(crate_pkg) {
-        Ok(crate_response) => mason_registry_api::ok_json(CrateResponse::from_crate_response(
-            crate_response.crate_data.max_version.clone(),
-            crate_response,
-        )),
+        Ok(crate_response) => mason_registry_api::ok_json(
+            CrateResponse::from_crate_response(
+                crate_response.crate_data.max_version.clone(),
+                crate_response,
+            ),
+            mason_registry_api::CacheControl::PublicMedium,
+        ),
         Err(err) => mason_registry_api::err_json(err),
     }
 }

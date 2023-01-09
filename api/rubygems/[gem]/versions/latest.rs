@@ -21,7 +21,10 @@ fn handler(request: Request) -> Result<impl IntoResponse, VercelError> {
     let manager = RubyGemsManager::new(RubyGemsClient::new());
 
     match manager.get_gem(&gem) {
-        Ok(gem) => mason_registry_api::ok_json::<RubyGemResponse>(gem.into()),
+        Ok(gem) => mason_registry_api::ok_json::<RubyGemResponse>(
+            gem.into(),
+            mason_registry_api::CacheControl::PublicMedium,
+        ),
         Err(err) => mason_registry_api::err_json(err),
     }
 }

@@ -34,7 +34,10 @@ fn handler(request: Request) -> Result<impl IntoResponse, VercelError> {
 
     let manager = GitHubManager::new(GitHubClient::new(api_key));
     match manager.get_all_sponsors("williamboman".to_owned()) {
-        Ok(sponsors) => mason_registry_api::ok_json::<SponsorsResponse>(sponsors.into()),
+        Ok(sponsors) => mason_registry_api::ok_json::<SponsorsResponse>(
+            sponsors.into(),
+            mason_registry_api::CacheControl::PublicMedium,
+        ),
         Err(err) => mason_registry_api::err_json(err),
     }
 }

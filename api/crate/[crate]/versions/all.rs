@@ -18,7 +18,9 @@ fn handler(request: Request) -> Result<impl IntoResponse, VercelError> {
     let manager = CratesManager::new();
 
     match manager.get_all_crate_versions(crate_pkg) {
-        Ok(versions) => mason_registry_api::ok_json(versions),
+        Ok(versions) => {
+            mason_registry_api::ok_json(versions, mason_registry_api::CacheControl::PublicMedium)
+        }
         Err(err) => mason_registry_api::err_json(err),
     }
 }
