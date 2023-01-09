@@ -23,7 +23,7 @@ fn handler(request: Request) -> Result<impl IntoResponse, VercelError> {
     let manager = GitHubManager::new(GitHubClient::new(api_key));
 
     match manager.get_latest_release(&repo) {
-        Ok(latest_release) => mason_registry_api::ok_json(latest_release),
+        Ok(latest_release) => mason_registry_api::ok_json(latest_release, repo.into()),
         Err(err) => mason_registry_api::err_json(err),
     }
 }

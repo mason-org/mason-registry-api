@@ -21,7 +21,9 @@ fn handler(request: Request) -> Result<impl IntoResponse, VercelError> {
     let manager = NpmManager::new(NpmClient::new());
 
     match manager.get_all_package_versions(&npm_package) {
-        Ok(versions) => mason_registry_api::ok_json(versions),
+        Ok(versions) => {
+            mason_registry_api::ok_json(versions, mason_registry_api::CacheControl::PublicMedium)
+        }
         Err(err) => mason_registry_api::err_json(err),
     }
 }

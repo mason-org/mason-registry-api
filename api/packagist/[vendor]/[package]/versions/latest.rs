@@ -20,10 +20,10 @@ fn handler(request: Request) -> Result<impl IntoResponse, VercelError> {
     let manager = PackagistManager::new(PackagistClient::new());
 
     match manager.get_package(&packagist_package) {
-        Ok(package) => mason_registry_api::ok_json(PackagistResponse::from_packagist_package_dto(
-            packagist_package.name,
-            package,
-        )),
+        Ok(package) => mason_registry_api::ok_json(
+            PackagistResponse::from_packagist_package_dto(packagist_package.name, package),
+            mason_registry_api::CacheControl::PublicMedium,
+        ),
         Err(err) => mason_registry_api::err_json(err),
     }
 }

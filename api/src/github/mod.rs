@@ -15,6 +15,18 @@ pub struct GitHubRepo {
     pub name: String,
 }
 
+impl From<GitHubRepo> for crate::CacheControl {
+    fn from(repo: GitHubRepo) -> Self {
+        match repo {
+            GitHubRepo {
+                ref owner,
+                ref name,
+            } if owner == "mason-org" && name == "mason-registry" => Self::PublicShort,
+            _ => Self::PublicMedium,
+        }
+    }
+}
+
 impl Display for GitHubRepo {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}/{}", self.owner, self.name)

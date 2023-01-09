@@ -22,7 +22,9 @@ fn handler(request: Request) -> Result<impl IntoResponse, VercelError> {
     let manager = PyPiManager::new(PyPiClient::new());
 
     match manager.get_all_package_versions(&pypi_package) {
-        Ok(versions) => mason_registry_api::ok_json(versions),
+        Ok(versions) => {
+            mason_registry_api::ok_json(versions, mason_registry_api::CacheControl::PublicMedium)
+        }
         Err(err) => mason_registry_api::err_json(err),
     }
 }

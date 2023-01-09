@@ -23,10 +23,10 @@ fn handler(request: Request) -> Result<impl IntoResponse, VercelError> {
     let manager = RubyGemsManager::new(RubyGemsClient::new());
 
     match manager.get_gem_version(&gem, version) {
-        Ok(versioned_gem) => mason_registry_api::ok_json(RubyGemResponse::from_versioned_dto(
-            gem.name,
-            versioned_gem,
-        )),
+        Ok(versioned_gem) => mason_registry_api::ok_json(
+            RubyGemResponse::from_versioned_dto(gem.name, versioned_gem),
+            mason_registry_api::CacheControl::PublicMedium,
+        ),
         Err(err) => mason_registry_api::err_json(err),
     }
 }

@@ -23,7 +23,10 @@ fn handler(request: Request) -> Result<impl IntoResponse, VercelError> {
 
     match manager.get_package(&npm_package) {
         Ok(package) => match manager.get_package_version(&package, version) {
-            Ok(package_version) => mason_registry_api::ok_json(package_version),
+            Ok(package_version) => mason_registry_api::ok_json(
+                package_version,
+                mason_registry_api::CacheControl::PublicMedium,
+            ),
             Err(err) => mason_registry_api::err_json(err),
         },
         Err(err) => mason_registry_api::err_json(err),
