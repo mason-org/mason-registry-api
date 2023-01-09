@@ -93,37 +93,9 @@ impl GitHubManager {
 
     pub fn get_latest_release(
         &self,
-        repo: &GitHubRepo,
-        include_prerelease: bool,
+        repo: &GitHubRepo
     ) -> Result<GitHubReleaseDto, GitHubError> {
-        let is_latest_release = |release: &GitHubReleaseDto| {
-            if include_prerelease {
-                !release.draft
-            } else {
-                !release.draft && !release.prerelease
-            }
-        };
-        let releases = self.client.paginate(
-            || {
-                self.client.fetch_releases(
-                    &repo,
-                    Some(GitHubPagination {
-                        page: 1,
-                        per_page: GitHubPagination::MAX_PAGE_LIMIT,
-                    }),
-                )
-            },
-            |response| {
-                (&response.data)
-                    .into_iter()
-                    .find(|r| is_latest_release(*r))
-                    .is_none()
-            },
-        )?;
-        releases
-            .into_iter()
-            .find(is_latest_release)
-            .ok_or_else(|| GitHubError::ResourceNotFound { source: None })
+        Ok(self.client.fetch_latest_release(&repo)?.data)
     }
 
     pub fn get_release_by_tag(
