@@ -32,6 +32,7 @@ enum GitHubApiEndpoint<'a> {
     Link(Link),
     Releases(&'a GitHubRepo),
     ReleaseTag(&'a GitHubRepo, &'a GitHubTag),
+    LatestRelease(&'a GitHubRepo),
     GitRef(&'a GitHubRepo, &'a dyn GitHubRefId),
 }
 
@@ -52,6 +53,9 @@ impl<'a> Display for GitHubApiEndpoint<'a> {
             GitHubApiEndpoint::Releases(repo) => {
                 f.write_fmt(format_args!("repos/{}/releases", repo))
             }
+            GitHubApiEndpoint::LatestRelease(repo) => {
+                f.write_fmt(format_args!("repos/{}/releases/latest", repo))
+            },
             GitHubApiEndpoint::ReleaseTag(repo, release_tag) => f.write_fmt(format_args!(
                 "repos/{}/releases/tags/{}",
                 repo, release_tag
@@ -191,6 +195,10 @@ impl GitHubClient {
         self.client
             .get(GitHubApiEndpoint::ReleaseTag(&repo, &release))?
             .try_into()
+    }
+
+    pub fn fetch_latest_release(&self, repo: &GitHubRepo) -> Result<GitHubResponse<GitHubReleaseDto>, reqwest::Error> {
+        self.client.get(GitHubApiEndpoint::LatestRelease(&repo))?.try_into()
     }
 
     fn graphql<Variables: Serialize>(
