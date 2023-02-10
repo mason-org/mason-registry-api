@@ -10,7 +10,7 @@
     "api/golang/**/*.rs": {
       "runtime": "vercel-rust@3.1.2"
     },
-    "api/repo/**/*.rs": {
+    "api/github/**/*.rs": {
       "runtime": "vercel-rust@3.1.2"
     },
     "api/npm/**/*.rs": {
@@ -27,6 +27,10 @@
     }
   },
   "rewrites": [
+    {
+      "source": "/api/repo/:path(.*)",
+      "destination": "/api/github/:path"
+    },
     {
       "source": "/api/npm/:path((?!@).*)",
       "destination": "/api/npm/_/:path"

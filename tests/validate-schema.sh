@@ -96,14 +96,16 @@ assert_ok_json         /api/pypi/cmake-language-server/versions/0.1.6     ./sche
 assert_not_found_json  /api/pypi/cmake-language-server/versions/17287138
 
 # repo
-assert_ok_json         /api/repo/sumneko/vscode-lua/releases/all       ./schemas/versions/all.json
-assert_ok_json         /api/repo/sumneko/vscode-lua/releases/latest    ./schemas/repo/releases/release.json
-assert_ok_json         /api/repo/sumneko/vscode-lua/releases/v3.6.4    ./schemas/repo/releases/release.json
-assert_not_found_json  /api/repo/sumneko/vscode-lua/releases/17287138
-assert_ok_json         /api/repo/sumneko/vscode-lua/tags/all           ./schemas/versions/all.json
-assert_ok_json         /api/repo/sumneko/vscode-lua/tags/latest        ./schemas/repo/tags/tag.json
-assert_ok_json         /api/repo/sumneko/vscode-lua/tags/v3.6.4        ./schemas/repo/tags/tag.json
-assert_not_found_json  /api/repo/sumneko/vscode-lua/tags/17287138
+for path in repo github; do
+    assert_ok_json         /api/$path/sumneko/vscode-lua/releases/all       ./schemas/versions/all.json
+    assert_ok_json         /api/$path/sumneko/vscode-lua/releases/latest    ./schemas/github/releases/release.json
+    assert_ok_json         /api/$path/sumneko/vscode-lua/releases/v3.6.4    ./schemas/github/releases/release.json
+    assert_not_found_json  /api/$path/sumneko/vscode-lua/releases/17287138
+    assert_ok_json         /api/$path/sumneko/vscode-lua/tags/all           ./schemas/versions/all.json
+    assert_ok_json         /api/$path/sumneko/vscode-lua/tags/latest        ./schemas/github/tags/tag.json
+    assert_ok_json         /api/$path/sumneko/vscode-lua/tags/v3.6.4        ./schemas/github/tags/tag.json
+    assert_not_found_json  /api/$path/sumneko/vscode-lua/tags/17287138
+done
 
 # rubygems
 assert_ok_json         /api/rubygems/solargraph/versions/all       ./schemas/versions/all.json
