@@ -6,27 +6,27 @@ convenience APIs for interacting with the Mason registry.
 
 # Endpoints
 
-## `/api/repo/{repo}/tags/latest`
+## `/api/github/{repo}/tags/latest`
 
 Returns the latest tag (ordered by commit date) of the provided `{repo}`.
 
 Example:
 
 ```
-GET /api/repo/sumneko/vscode-lua/tags/latest
+GET /api/github/sumneko/vscode-lua/tags/latest
 {
   "tag": "v3.5.6"
 }
 ```
 
-## `/api/repo/{repo}/tags/all`
+## `/api/github/{repo}/tags/all`
 
 Returns a list of all available tags of the provided `{repo}`.
 
 Example:
 
 ```
-GET /api/repo/sumneko/vscode-lua/tags/all
+GET /api/github/sumneko/vscode-lua/tags/all
 [
   "v3.5.6",
   "v3.5.5",
@@ -38,14 +38,14 @@ GET /api/repo/sumneko/vscode-lua/tags/all
 ]
 ```
 
-## `/api/repo/{repo}/releases/latest`
+## `/api/github/{repo}/releases/latest`
 
 Returns the latest release of the provided `{repo}`.
 
 Example:
 
 ```
-GET /api/repo/sumneko/vscode-lua/releases/latest
+GET /api/github/sumneko/vscode-lua/releases/latest
 {
   "id": 77366513,
   "tag_name": "v3.5.6",
@@ -67,13 +67,13 @@ GET /api/repo/sumneko/vscode-lua/releases/latest
 }
 ```
 
-## `/api/repo/{repo}/releases/all`
+## `/api/github/{repo}/releases/all`
 Returns a list of all available releases (their tag name) of the provided `{repo}`.
 
 Example:
 
 ```
-GET /api/repo/sumneko/vscode-lua/releases/all
+GET /api/github/sumneko/vscode-lua/releases/all
 [
   "v3.5.6",
   "v3.5.5",

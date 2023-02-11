@@ -29,28 +29,28 @@ name = "crate-versions-latest"
 path = "crate/[crate]/versions/latest.rs"
 
 [[bin]]
-name = "repo-releases-latest"
-path = "repo/[owner]/[name]/releases/latest.rs"
+name = "github-releases-latest"
+path = "github/[owner]/[name]/releases/latest.rs"
 
 [[bin]]
-name = "repo-releases-all"
-path = "repo/[owner]/[name]/releases/all.rs"
+name = "github-releases-all"
+path = "github/[owner]/[name]/releases/all.rs"
 
 [[bin]]
-name = "repo-releases-release"
-path = "repo/[owner]/[name]/releases/[release].rs"
+name = "github-releases-release"
+path = "github/[owner]/[name]/releases/[release].rs"
 
 [[bin]]
-name = "repo-tags-latest"
-path = "repo/[owner]/[name]/tags/latest.rs"
+name = "github-tags-latest"
+path = "github/[owner]/[name]/tags/latest.rs"
 
 [[bin]]
-name = "repo-tags-all"
-path = "repo/[owner]/[name]/tags/all.rs"
+name = "github-tags-all"
+path = "github/[owner]/[name]/tags/all.rs"
 
 [[bin]]
-name = "repo-tags-tag"
-path = "repo/[owner]/[name]/tags/[tag].rs"
+name = "github-tags-tag"
+path = "github/[owner]/[name]/tags/[tag].rs"
 
 [[bin]]
 name = "npm-versions-latest"
