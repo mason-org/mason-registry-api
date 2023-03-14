@@ -1,14 +1,12 @@
 use http::{Method, StatusCode};
 use mason_registry_api::{
     npm::{client::NpmClient, manager::NpmManager},
-    parse_url, QueryParams,
+    vercel::parse_url,
+    QueryParams,
 };
+use vercel_runtime::{run, Body, Error, Request, Response};
 
-use std::error::Error;
-
-use vercel_lambda::{error::VercelError, lambda, Body, IntoResponse, Request, Response};
-
-fn handler(request: Request) -> Result<impl IntoResponse, VercelError> {
+async fn handler(request: Request) -> Result<Response<Body>, Error> {
     if request.method() != Method::GET {
         return Ok(Response::builder()
             .status(StatusCode::METHOD_NOT_ALLOWED)
@@ -23,17 +21,17 @@ fn handler(request: Request) -> Result<impl IntoResponse, VercelError> {
 
     match manager.get_package(&npm_package) {
         Ok(package) => match manager.get_package_version(&package, version) {
-            Ok(package_version) => mason_registry_api::ok_json(
+            Ok(package_version) => mason_registry_api::vercel::ok_json(
                 package_version,
                 mason_registry_api::CacheControl::PublicMedium,
             ),
-            Err(err) => mason_registry_api::err_json(err),
+            Err(err) => mason_registry_api::vercel::err_json(err),
         },
-        Err(err) => mason_registry_api::err_json(err),
+        Err(err) => mason_registry_api::vercel::err_json(err),
     }
 }
 
-// Start the runtime with the handler
-fn main() -> Result<(), Box<dyn Error>> {
-    Ok(lambda!(handler))
+#[tokio::main]
+async fn main() -> Result<(), Error> {
+    run(handler).await
 }

@@ -1,15 +1,13 @@
 use http::{Method, StatusCode};
 use mason_registry_api::{
-    parse_url,
     pypi::{client::PyPiClient, manager::PyPiManager},
+    vercel::parse_url,
     QueryParams,
 };
 
-use std::error::Error;
+use vercel_runtime::{run, Body, Error, Request, Response};
 
-use vercel_lambda::{error::VercelError, lambda, Body, IntoResponse, Request, Response};
-
-fn handler(request: Request) -> Result<impl IntoResponse, VercelError> {
+async fn handler(request: Request) -> Result<Response<Body>, Error> {
     if request.method() != Method::GET {
         return Ok(Response::builder()
             .status(StatusCode::METHOD_NOT_ALLOWED)
@@ -23,15 +21,15 @@ fn handler(request: Request) -> Result<impl IntoResponse, VercelError> {
     let manager = PyPiManager::new(PyPiClient::new());
 
     match manager.get_project_version(&pypi_package, version) {
-        Ok(package) => mason_registry_api::ok_json(
+        Ok(package) => mason_registry_api::vercel::ok_json(
             package.info,
             mason_registry_api::CacheControl::PublicMedium,
         ),
-        Err(err) => mason_registry_api::err_json(err),
+        Err(err) => mason_registry_api::vercel::err_json(err),
     }
 }
 
-// Start the runtime with the handler
-fn main() -> Result<(), Box<dyn Error>> {
-    Ok(lambda!(handler))
+#[tokio::main]
+async fn main() -> Result<(), Error> {
+    run(handler).await
 }

@@ -1,6 +1,5 @@
 use http::StatusCode;
 use thiserror::Error;
-use vercel_lambda::error::VercelError;
 
 use crate::errors::ApiError;
 
@@ -25,12 +24,6 @@ impl ApiError for GitHubError {
             }
             GitHubError::ServerError { .. } => StatusCode::BAD_GATEWAY,
         }
-    }
-}
-
-impl From<GitHubError> for VercelError {
-    fn from(github_error: GitHubError) -> Self {
-        Self::new(&github_error.to_string())
     }
 }
 

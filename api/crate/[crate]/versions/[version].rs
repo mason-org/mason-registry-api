@@ -1,14 +1,12 @@
 use http::{Method, StatusCode};
 use mason_registry_api::{
     crates::{api::CrateResponse, manager::CratesManager},
-    parse_url, QueryParams,
+    vercel::parse_url,
+    QueryParams,
 };
+use vercel_runtime::{run, Body, Error, Request, Response};
 
-use std::error::Error;
-
-use vercel_lambda::{error::VercelError, lambda, Body, IntoResponse, Request, Response};
-
-fn handler(request: Request) -> Result<impl IntoResponse, VercelError> {
+async fn handler(request: Request) -> Result<Response<Body>, Error> {
     if request.method() != Method::GET {
         return Ok(Response::builder()
             .status(StatusCode::METHOD_NOT_ALLOWED)
@@ -22,15 +20,15 @@ fn handler(request: Request) -> Result<impl IntoResponse, VercelError> {
     let manager = CratesManager::new();
 
     match manager.get_crate_version(crate_pkg, version) {
-        Ok(crate_response) => mason_registry_api::ok_json(
+        Ok(crate_response) => mason_registry_api::vercel::ok_json(
             CrateResponse::from_crate_response(version.to_owned(), crate_response),
             mason_registry_api::CacheControl::PublicMedium,
         ),
-        Err(err) => mason_registry_api::err_json(err),
+        Err(err) => mason_registry_api::vercel::err_json(err),
     }
 }
 
-// Start the runtime with the handler
-fn main() -> Result<(), Box<dyn Error>> {
-    Ok(lambda!(handler))
+#[tokio::main]
+async fn main() -> Result<(), Error> {
+    run(handler).await
 }

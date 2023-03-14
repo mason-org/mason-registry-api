@@ -5,8 +5,6 @@ pub mod manager;
 
 use std::{fmt::Display, str::FromStr};
 
-use vercel_lambda::error::VercelError;
-
 use crate::QueryParams;
 
 #[derive(Debug)]
@@ -66,7 +64,7 @@ impl Display for GitHubTag {
 }
 
 impl FromStr for GitHubTag {
-    type Err = VercelError;
+    type Err = Box<dyn std::error::Error + Send + Sync + 'static>;
 
     fn from_str(str: &str) -> Result<Self, Self::Err> {
         Ok(Self(str.to_owned()))

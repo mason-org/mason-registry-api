@@ -1,6 +1,5 @@
 use http::StatusCode;
 use thiserror::Error;
-use vercel_lambda::error::VercelError;
 
 use crate::errors::ApiError;
 
@@ -25,12 +24,6 @@ impl ApiError for RubyGemsError {
             }
             RubyGemsError::ServerError { .. } => StatusCode::BAD_GATEWAY,
         }
-    }
-}
-
-impl From<RubyGemsError> for VercelError {
-    fn from(pypi_error: RubyGemsError) -> Self {
-        Self::new(&pypi_error.to_string())
     }
 }
 

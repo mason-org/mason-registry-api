@@ -1,12 +1,6 @@
 use std::{collections::HashMap, ops::Deref};
 
-use ::http::{
-    header::{CACHE_CONTROL, CONTENT_TYPE},
-    Response, StatusCode,
-};
-use errors::ApiError;
 use serde::Serialize;
-use vercel_lambda::{error::VercelError, Body};
 
 pub mod crates;
 pub mod errors;
@@ -17,11 +11,7 @@ pub mod npm;
 pub mod packagist;
 pub mod pypi;
 pub mod rubygems;
-
-pub fn parse_url(request: &vercel_lambda::Request) -> Result<url::Url, VercelError> {
-    url::Url::parse(&request.uri().to_string())
-        .map_err(|_| VercelError::new("Failed to parse request URI."))
-}
+pub mod vercel;
 
 pub struct QueryParams(HashMap<String, String>);
 
@@ -54,47 +44,9 @@ pub enum CacheControl {
     PublicMedium,
 }
 
-fn json_response<T: Serialize>(
-    status: StatusCode,
-    cache: CacheControl,
-    data: &T,
-) -> Result<Response<Body>, VercelError> {
-    Response::builder()
-        .status(status)
-        .header(CONTENT_TYPE, "application/json")
-        .header(
-            CACHE_CONTROL,
-            match cache {
-                CacheControl::NoStore => "no-store",
-                CacheControl::PublicShort => "s-maxage=60, stale-while-revalidate=120",
-                CacheControl::PublicMedium => "s-maxage=1800",
-            },
-        )
-        .body(Body::Text(
-            serde_json::to_string_pretty(data)
-                .map_err(|_| VercelError::new("Failed to serialize."))?,
-        ))
-        .map_err(|_| VercelError::new("Failed to build response."))
-}
-
-pub fn ok_json<T: Serialize>(data: T, cache: CacheControl) -> Result<Response<Body>, VercelError> {
-    json_response(StatusCode::OK, cache, &data)
-}
-
 #[derive(Serialize)]
 struct ErrResponse {
     message: String,
-}
-
-pub fn err_json<T: ApiError>(err: T) -> Result<Response<Body>, VercelError> {
-    eprintln!("{}", err);
-    json_response(
-        err.status_code(),
-        CacheControl::NoStore,
-        &ErrResponse {
-            message: err.to_string(),
-        },
-    )
 }
 
 #[cfg(test)]

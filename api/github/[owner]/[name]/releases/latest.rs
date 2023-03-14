@@ -3,13 +3,10 @@ use mason_registry_api::{
     github::{client::GitHubClient, manager::GitHubManager},
     QueryParams,
 };
-use std::error::Error;
+use vercel_runtime::{run, Body, Error, Request, Response};
 
-use vercel_lambda::{error::VercelError, lambda, Body, IntoResponse, Request, Response};
-
-fn handler(request: Request) -> Result<impl IntoResponse, VercelError> {
-    let api_key: String =
-        std::env::var("GITHUB_API_KEY").map_err(|e| VercelError::new(&format!("{}", e)))?;
+async fn handler(request: Request) -> Result<Response<Body>, Error> {
+    let api_key: String = std::env::var("GITHUB_API_KEY")?;
 
     if request.method() != Method::GET {
         return Ok(Response::builder()
@@ -17,18 +14,18 @@ fn handler(request: Request) -> Result<impl IntoResponse, VercelError> {
             .body(Body::Empty)?);
     }
 
-    let url = mason_registry_api::parse_url(&request)?;
+    let url = mason_registry_api::vercel::parse_url(&request)?;
     let query_params: QueryParams = (&url).into();
     let repo = (&query_params).into();
     let manager = GitHubManager::new(GitHubClient::new(api_key));
 
     match manager.get_latest_release(&repo) {
-        Ok(latest_release) => mason_registry_api::ok_json(latest_release, repo.into()),
-        Err(err) => mason_registry_api::err_json(err),
+        Ok(latest_release) => mason_registry_api::vercel::ok_json(latest_release, repo.into()),
+        Err(err) => mason_registry_api::vercel::err_json(err),
     }
 }
 
-// Start the runtime with the handler
-fn main() -> Result<(), Box<dyn Error>> {
-    Ok(lambda!(handler))
+#[tokio::main]
+async fn main() -> Result<(), Error> {
+    run(handler).await
 }

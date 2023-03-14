@@ -1,6 +1,5 @@
 use http::StatusCode;
 use thiserror::Error;
-use vercel_lambda::error::VercelError;
 
 use crate::errors::ApiError;
 
@@ -25,12 +24,6 @@ impl ApiError for PackagistError {
             }
             PackagistError::ServerError { .. } => StatusCode::BAD_GATEWAY,
         }
-    }
-}
-
-impl From<PackagistError> for VercelError {
-    fn from(npm_error: PackagistError) -> Self {
-        Self::new(&npm_error.to_string())
     }
 }
 
