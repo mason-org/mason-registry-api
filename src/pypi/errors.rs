@@ -1,6 +1,5 @@
 use http::StatusCode;
 use thiserror::Error;
-use vercel_lambda::error::VercelError;
 
 use crate::errors::ApiError;
 
@@ -28,12 +27,6 @@ impl ApiError for PyPiError {
     }
 }
 
-impl From<PyPiError> for VercelError {
-    fn from(pypi_error: PyPiError) -> Self {
-        Self::new(&pypi_error.to_string())
-    }
-}
-
 impl From<reqwest::Error> for PyPiError {
     fn from(req_error: reqwest::Error) -> Self {
         match req_error.status() {
@@ -50,4 +43,3 @@ impl From<reqwest::Error> for PyPiError {
         }
     }
 }
-

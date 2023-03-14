@@ -1,7 +1,7 @@
 use serde::Deserialize;
 
-pub mod tags;
 pub mod sponsors;
+pub mod tags;
 
 #[derive(Debug, Deserialize)]
 pub struct Edge<Node> {

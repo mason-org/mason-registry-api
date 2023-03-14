@@ -91,10 +91,7 @@ impl GitHubManager {
         )?)
     }
 
-    pub fn get_latest_release(
-        &self,
-        repo: &GitHubRepo
-    ) -> Result<GitHubReleaseDto, GitHubError> {
+    pub fn get_latest_release(&self, repo: &GitHubRepo) -> Result<GitHubReleaseDto, GitHubError> {
         Ok(self.client.fetch_latest_release(&repo)?.data)
     }
 

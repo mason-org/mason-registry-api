@@ -1,6 +1,5 @@
 use http::StatusCode;
 use thiserror::Error;
-use vercel_lambda::error::VercelError;
 
 use crate::errors::ApiError;
 
@@ -25,12 +24,6 @@ impl ApiError for GolangError {
             }
             GolangError::ServerError { .. } => StatusCode::BAD_GATEWAY,
         }
-    }
-}
-
-impl From<GolangError> for VercelError {
-    fn from(error: GolangError) -> Self {
-        Self::new(&error.to_string())
     }
 }
 
