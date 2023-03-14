@@ -1,6 +1,7 @@
 use std::{collections::HashMap, ops::Deref};
 
 use serde::Serialize;
+use tracing_subscriber::FmtSubscriber;
 
 pub mod crates;
 pub mod errors;
@@ -47,6 +48,14 @@ pub enum CacheControl {
 #[derive(Serialize)]
 struct ErrResponse {
     message: String,
+}
+
+pub fn setup_tracing() {
+    let subscriber = FmtSubscriber::builder()
+        .with_max_level(tracing::Level::INFO)
+        .finish();
+
+    let _ = tracing::subscriber::set_global_default(subscriber);
 }
 
 #[cfg(test)]

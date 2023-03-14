@@ -7,13 +7,13 @@ use vercel_runtime::{Body, Error as VercelError, Request};
 
 use crate::{errors::ApiError, CacheControl, ErrResponse};
 
-pub fn err_json<T: ApiError>(err: T) -> Result<Response<Body>, VercelError> {
-    // tracing::error!(err);
+pub fn err_json<T: ApiError>(error: T) -> Result<Response<Body>, VercelError> {
+    tracing::error!(%error, "API error");
     json_response(
-        err.status_code(),
+        error.status_code(),
         CacheControl::NoStore,
         &ErrResponse {
-            message: err.to_string(),
+            message: error.to_string(),
         },
     )
 }
