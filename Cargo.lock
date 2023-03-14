@@ -592,6 +592,7 @@ dependencies = [
  "thiserror",
  "tokio",
  "tracing",
+ "tracing-subscriber",
  "url",
  "vercel_runtime",
 ]

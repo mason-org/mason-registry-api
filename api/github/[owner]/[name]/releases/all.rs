@@ -44,5 +44,6 @@ async fn handler(request: Request) -> Result<Response<Body>, Error> {
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
+    mason_registry_api::setup_tracing();
     run(handler).await
 }
