@@ -31,13 +31,16 @@ function assert_response {
 }
 
 function assert_schema {
-    declare SCHEMA_FILE=$1
+    declare ENDPOINT=$1
+    declare SCHEMA_FILE=$2
     declare BUFFER
     BUFFER=$(mktemp -t XXXXXXXX.json)
     < /dev/stdin cat > "$BUFFER"
-    ajv validate -d "$BUFFER" --spec=draft2020 -c ajv-formats -s "$SCHEMA_FILE" || {
-        echo "Failed to validate $SCHEMA_FILE" | tee -a "$ERRORS"
-    }
+    if ajv validate -d "$BUFFER" --spec=draft2020 -c ajv-formats -s "$SCHEMA_FILE" > /dev/null; then
+        echo "${ENDPOINT} is valid."
+    else
+        echo "Failed to validate ${ENDPOINT}" | tee -a "$ERRORS"
+    fi
     rm "$BUFFER"
 }
 
@@ -54,7 +57,7 @@ function assert_ok_json {
         >  "$STDOUT" \
         2> "$STDERR"
 
-    < "$STDOUT" assert_schema "$SCHEMA_FILE"
+    < "$STDOUT" assert_schema "$ENDPOINT" "$SCHEMA_FILE"
     < "$STDERR" assert_response 200 "application/json"
 }
 
@@ -70,7 +73,7 @@ function assert_not_found_json {
         >  "$STDOUT" \
         2> "$STDERR"
 
-    < "$STDOUT" assert_schema "./schemas/errors/not_found.json"
+    < "$STDOUT" assert_schema "$ENDPOINT" "./schemas/errors/not_found.json"
     < "$STDERR" assert_response 404 "application/json"
 }
 
