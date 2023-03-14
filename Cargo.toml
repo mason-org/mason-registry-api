@@ -14,96 +14,99 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 thiserror = "1.0"
 url = "2.3.1"
-vercel_lambda = "*"
+vercel_lambda = "0.2"
+
+[lib]
+path = "src/lib.rs"
 
 [[bin]]
 name = "crate-versions-all"
-path = "crate/[crate]/versions/all.rs"
+path = "api/crate/[crate]/versions/all.rs"
 
 [[bin]]
 name = "crate-versions-version"
-path = "crate/[crate]/versions/[version].rs"
+path = "api/crate/[crate]/versions/[version].rs"
 
 [[bin]]
 name = "crate-versions-latest"
-path = "crate/[crate]/versions/latest.rs"
+path = "api/crate/[crate]/versions/latest.rs"
 
 [[bin]]
 name = "github-releases-latest"
-path = "github/[owner]/[name]/releases/latest.rs"
+path = "api/github/[owner]/[name]/releases/latest.rs"
 
 [[bin]]
 name = "github-releases-all"
-path = "github/[owner]/[name]/releases/all.rs"
+path = "api/github/[owner]/[name]/releases/all.rs"
 
 [[bin]]
 name = "github-releases-release"
-path = "github/[owner]/[name]/releases/[release].rs"
+path = "api/github/[owner]/[name]/releases/[release].rs"
 
 [[bin]]
 name = "github-tags-latest"
-path = "github/[owner]/[name]/tags/latest.rs"
+path = "api/github/[owner]/[name]/tags/latest.rs"
 
 [[bin]]
 name = "github-tags-all"
-path = "github/[owner]/[name]/tags/all.rs"
+path = "api/github/[owner]/[name]/tags/all.rs"
 
 [[bin]]
 name = "github-tags-tag"
-path = "github/[owner]/[name]/tags/[tag].rs"
+path = "api/github/[owner]/[name]/tags/[tag].rs"
 
 [[bin]]
 name = "npm-versions-latest"
-path = "npm/[scope]/[package]/versions/latest.rs"
+path = "api/npm/[scope]/[package]/versions/latest.rs"
 
 [[bin]]
 name = "npm-versions-all"
-path = "npm/[scope]/[package]/versions/all.rs"
+path = "api/npm/[scope]/[package]/versions/all.rs"
 
 [[bin]]
 name = "npm-versions-version"
-path = "npm/[scope]/[package]/versions/[version].rs"
+path = "api/npm/[scope]/[package]/versions/[version].rs"
 
 [[bin]]
 name = "pypi-versions-latest"
-path = "pypi/[package]/versions/latest.rs"
+path = "api/pypi/[package]/versions/latest.rs"
 
 [[bin]]
 name = "pypi-versions-all"
-path = "pypi/[package]/versions/all.rs"
+path = "api/pypi/[package]/versions/all.rs"
 
 [[bin]]
 name = "pypi-versions-version"
-path = "pypi/[package]/versions/[version].rs"
+path = "api/pypi/[package]/versions/[version].rs"
 
 [[bin]]
 name = "rubygems-versions-latest"
-path = "rubygems/[gem]/versions/latest.rs"
+path = "api/rubygems/[gem]/versions/latest.rs"
 
 [[bin]]
 name = "rubygems-versions-all"
-path = "rubygems/[gem]/versions/all.rs"
+path = "api/rubygems/[gem]/versions/all.rs"
 
 [[bin]]
 name = "rubygems-versions-version"
-path = "rubygems/[gem]/versions/[version].rs"
+path = "api/rubygems/[gem]/versions/[version].rs"
 
 [[bin]]
 name = "packagist-versions-latest"
-path = "packagist/[vendor]/[package]/versions/latest.rs"
+path = "api/packagist/[vendor]/[package]/versions/latest.rs"
 
 [[bin]]
 name = "packagist-versions-all"
-path = "packagist/[vendor]/[package]/versions/all.rs"
+path = "api/packagist/[vendor]/[package]/versions/all.rs"
 
 [[bin]]
 name = "packagist-versions-version"
-path = "packagist/[vendor]/[package]/versions/[version].rs"
+path = "api/packagist/[vendor]/[package]/versions/[version].rs"
 
 [[bin]]
 name = "golang-versions-all"
-path = "golang/[package]/versions/all.rs"
+path = "api/golang/[package]/versions/all.rs"
 
 [[bin]]
 name = "mason-sponsors"
-path = "mason/sponsors.rs"
+path = "api/mason/sponsors.rs"
