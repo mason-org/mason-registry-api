@@ -2,7 +2,7 @@
 name = "mason-registry-api"
 version = "1.0.0"
 authors = ["William Boman <william@redwill.se>"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 crates_io_api = "0.8.1"
