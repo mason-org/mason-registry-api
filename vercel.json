@@ -1,29 +1,8 @@
 {
   "ignoreCommand": "[ \"$VERCEL_ENV\" != production ]",
   "functions": {
-    "api/mason/**/*.rs": {
-      "runtime": "vercel-rust@3.1.2"
-    },
-    "api/crate/**/*.rs": {
-      "runtime": "vercel-rust@3.1.2"
-    },
-    "api/golang/**/*.rs": {
-      "runtime": "vercel-rust@3.1.2"
-    },
-    "api/github/**/*.rs": {
-      "runtime": "vercel-rust@3.1.2"
-    },
-    "api/npm/**/*.rs": {
-      "runtime": "vercel-rust@3.1.2"
-    },
-    "api/pypi/**/*.rs": {
-      "runtime": "vercel-rust@3.1.2"
-    },
-    "api/rubygems/**/*.rs": {
-      "runtime": "vercel-rust@3.1.2"
-    },
-    "api/packagist/**/*.rs": {
-      "runtime": "vercel-rust@3.1.2"
+    "api/**/*.rs": {
+      "runtime": "vercel-rust@4.0.0-beta.1"
     }
   },
   "rewrites": [
