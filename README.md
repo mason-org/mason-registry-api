@@ -7,9 +7,8 @@
 <img src="https://user-images.githubusercontent.com/6705160/230377905-3e194e97-a1fa-47f6-88c7-20f8286e1fce.png" alt="mason-registry-api logo" />
 
 <p align="center">
-    Core package registry for . Public, edge-cached, API for <a
-    href="https://github.com/williamboman/mason.nvim"><code>mason.nvim</code></a> that exposes convenience APIs for the
-    Mason registry.
+    Public, edge-cached, API for <a href="https://github.com/williamboman/mason.nvim"><code>mason.nvim</code></a> that exposes convenience APIs
+    for the Mason registry.
 </p>
 
 # Endpoints
