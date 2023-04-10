@@ -1,6 +1,5 @@
 use http::{Method, StatusCode};
 use mason_registry_api::{
-    badges::BadgeColor,
     github::GitHubRepo,
     renovate::{client::RenovateClient, manager::RenovateManager},
 };
@@ -17,7 +16,7 @@ async fn handler(request: Request) -> Result<Response<Body>, Error> {
 
     let manager = RenovateManager::new(RenovateClient::new(api_key));
     let registry_repo = GitHubRepo::new("mason-org".to_owned(), "mason-registry".to_owned());
-    match manager.get_badge(&registry_repo, BadgeColor::Brightgreen) {
+    match manager.get_badge(&registry_repo) {
         Ok(badge) => {
             mason_registry_api::vercel::ok_json(badge, mason_registry_api::CacheControl::NoStore)
         }

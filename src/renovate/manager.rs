@@ -43,31 +43,46 @@ impl RenovateManager {
         Self { client }
     }
 
-    fn get_relative_timestamp<D1, D2>(dt1: D1, dt2: D2) -> RelativeTimestamp
+    fn get_duration_since<D1, D2>(dt1: D1, dt2: D2) -> Duration
     where
         D1: Into<DateTime<Utc>>,
         D2: Into<DateTime<Utc>>,
     {
-        let delta: Duration = dt2.into().signed_duration_since(dt1.into());
-        match delta.max(Duration::seconds(0)) {
+        dt2.into()
+            .signed_duration_since(dt1.into())
+            .max(Duration::seconds(0))
+    }
+
+    fn get_relative_timestamp(delta: Duration) -> RelativeTimestamp {
+        match delta {
             delta if delta.num_minutes() < 60 => RelativeTimestamp::InMinutes(delta),
             delta => RelativeTimestamp::InHours(delta),
         }
     }
 
-    pub fn get_badge(&self, repo: &GitHubRepo, style: BadgeColor) -> Result<Badge, RenovateError> {
+    fn get_badge_color(duration: Duration) -> BadgeColor {
+        match duration.num_hours() {
+            0..=7 => BadgeColor::Brightgreen,
+            8..=11 => BadgeColor::Yellowgreen,
+            12..=16 => BadgeColor::Orange,
+            _ => BadgeColor::Red,
+        }
+    }
+
+    pub fn get_badge(&self, repo: &GitHubRepo) -> Result<Badge, RenovateError> {
         let jobs = self.client.fetch_github_jobs(repo)?.jobs;
         if let Some(job) = jobs.iter().rev().find(|job| job.result == JobResult::Done) {
             let date_time = DateTime::parse_from_rfc3339(&job.ended).map_err(|err| {
                 tracing::error!("Failed to parse job ended timestamp {}: {}", job.ended, err);
                 RenovateError::InternalError
             })?;
-            let duration = Self::get_relative_timestamp(date_time, Utc::now());
+            let delta = Self::get_duration_since(date_time, Utc::now());
+            let rel_ts = Self::get_relative_timestamp(delta);
 
             Ok(Badge::new(
                 "renovate".to_owned(),
-                duration.to_string(),
-                style,
+                rel_ts.to_string(),
+                Self::get_badge_color(delta),
             ))
         } else {
             tracing::debug!("Unable to find any done jobs {:?}", jobs);
@@ -83,31 +98,31 @@ mod tests {
     use super::{RelativeTimestamp, RenovateManager};
 
     #[test]
-    fn should_use_correct_temporal_unit() -> Result<(), ParseError> {
+    fn should_calculate_duration_since() -> Result<(), ParseError> {
         assert_eq!(
-            RelativeTimestamp::InMinutes(Duration::minutes(42)),
-            RenovateManager::get_relative_timestamp(
+            Duration::minutes(42),
+            RenovateManager::get_duration_since(
                 DateTime::parse_from_rfc3339("2023-04-10T12:55:00Z")?,
                 DateTime::parse_from_rfc3339("2023-04-10T13:37:00Z")?,
             )
         );
         assert_eq!(
-            RelativeTimestamp::InMinutes(Duration::minutes(59)),
-            RenovateManager::get_relative_timestamp(
+            Duration::minutes(59),
+            RenovateManager::get_duration_since(
                 DateTime::parse_from_rfc3339("2023-04-10T12:38:00Z")?,
                 DateTime::parse_from_rfc3339("2023-04-10T13:37:00Z")?,
             )
         );
         assert_eq!(
-            RelativeTimestamp::InHours(Duration::hours(1)),
-            RenovateManager::get_relative_timestamp(
+            Duration::hours(1),
+            RenovateManager::get_duration_since(
                 DateTime::parse_from_rfc3339("2023-04-10T12:37:00Z")?,
                 DateTime::parse_from_rfc3339("2023-04-10T13:37:00Z")?,
             )
         );
         assert_eq!(
-            RelativeTimestamp::InHours(Duration::hours(8760)),
-            RenovateManager::get_relative_timestamp(
+            Duration::hours(8760),
+            RenovateManager::get_duration_since(
                 DateTime::parse_from_rfc3339("2022-04-10T13:37:00Z")?,
                 DateTime::parse_from_rfc3339("2023-04-10T13:37:00Z")?,
             )
@@ -116,13 +131,34 @@ mod tests {
     }
 
     #[test]
-    fn should_account_clock_skew() -> Result<(), ParseError> {
+    fn should_account_for_clock_skew() -> Result<(), ParseError> {
         assert_eq!(
-            RelativeTimestamp::InMinutes(Duration::seconds(0)),
-            RenovateManager::get_relative_timestamp(
+            Duration::seconds(0),
+            RenovateManager::get_duration_since(
                 DateTime::parse_from_rfc3339("2023-04-10T14:37:00Z")?,
                 DateTime::parse_from_rfc3339("2023-04-10T13:37:00Z")?,
             )
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn should_use_correct_temporal_unit() -> Result<(), ParseError> {
+        assert_eq!(
+            RelativeTimestamp::InMinutes(Duration::minutes(42)),
+            RenovateManager::get_relative_timestamp(Duration::minutes(42))
+        );
+        assert_eq!(
+            RelativeTimestamp::InMinutes(Duration::minutes(59)),
+            RenovateManager::get_relative_timestamp(Duration::minutes(59))
+        );
+        assert_eq!(
+            RelativeTimestamp::InHours(Duration::hours(1)),
+            RenovateManager::get_relative_timestamp(Duration::minutes(60))
+        );
+        assert_eq!(
+            RelativeTimestamp::InHours(Duration::hours(8760)),
+            RenovateManager::get_relative_timestamp(Duration::hours(8760))
         );
         Ok(())
     }
