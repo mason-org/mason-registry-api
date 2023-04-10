@@ -3,6 +3,7 @@ use std::{collections::HashMap, ops::Deref};
 use serde::Serialize;
 use tracing_subscriber::FmtSubscriber;
 
+pub mod badges;
 pub mod crates;
 pub mod errors;
 pub mod github;
@@ -11,6 +12,7 @@ pub mod http;
 pub mod npm;
 pub mod packagist;
 pub mod pypi;
+pub mod renovate;
 pub mod rubygems;
 pub mod vercel;
 
@@ -45,15 +47,28 @@ pub enum CacheControl {
     PublicMedium,
 }
 
+impl CacheControl {
+    pub fn get_header(&self) -> String {
+        match self {
+            CacheControl::NoStore => "no-store".to_owned(),
+            CacheControl::PublicShort => "s-maxage=60, stale-while-revalidate=120".to_owned(),
+            CacheControl::PublicMedium => "s-maxage=1800".to_owned(),
+        }
+    }
+}
+
 #[derive(Serialize)]
 struct ErrResponse {
     message: String,
 }
 
 pub fn setup_tracing() {
-    let subscriber = FmtSubscriber::builder()
-        .with_max_level(tracing::Level::INFO)
-        .finish();
+    let tracing_level: Option<&'static str> = std::option_env!("TRACING_LEVEL");
+    let level = tracing_level
+        .and_then(|level| level.parse().ok())
+        .unwrap_or(tracing::Level::INFO);
+
+    let subscriber = FmtSubscriber::builder().with_max_level(level).finish();
 
     let _ = tracing::subscriber::set_global_default(subscriber);
 }

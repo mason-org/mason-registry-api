@@ -1,6 +1,6 @@
 use http::{
-    header::{CACHE_CONTROL, CONTENT_TYPE},
-    Response, StatusCode,
+    header::{CACHE_CONTROL, CONTENT_TYPE, LOCATION},
+    HeaderValue, Response, StatusCode,
 };
 use serde::Serialize;
 use vercel_runtime::{Body, Error as VercelError, Request};
@@ -22,6 +22,14 @@ pub fn ok_json<T: Serialize>(data: T, cache: CacheControl) -> Result<Response<Bo
     json_response(StatusCode::OK, cache, &data)
 }
 
+pub fn redirect<S: AsRef<str>>(to: S, cache: CacheControl) -> Result<Response<Body>, VercelError> {
+    Ok(Response::builder()
+        .status(StatusCode::TEMPORARY_REDIRECT)
+        .header(CACHE_CONTROL, cache.get_header())
+        .header(LOCATION, HeaderValue::from_str(to.as_ref())?)
+        .body(Body::Empty)?)
+}
+
 pub fn json_response<T: Serialize>(
     status: StatusCode,
     cache: CacheControl,
@@ -30,14 +38,7 @@ pub fn json_response<T: Serialize>(
     Ok(Response::builder()
         .status(status)
         .header(CONTENT_TYPE, "application/json")
-        .header(
-            CACHE_CONTROL,
-            match cache {
-                CacheControl::NoStore => "no-store",
-                CacheControl::PublicShort => "s-maxage=60, stale-while-revalidate=120",
-                CacheControl::PublicMedium => "s-maxage=1800",
-            },
-        )
+        .header(CACHE_CONTROL, cache.get_header())
         .body(Body::Text(serde_json::to_string_pretty(data)?))?)
 }
 
