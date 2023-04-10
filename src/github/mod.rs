@@ -13,6 +13,12 @@ pub struct GitHubRepo {
     pub name: String,
 }
 
+impl GitHubRepo {
+    pub fn new(owner: String, name: String) -> Self {
+        Self { owner, name }
+    }
+}
+
 impl From<GitHubRepo> for crate::CacheControl {
     fn from(repo: GitHubRepo) -> Self {
         match repo {

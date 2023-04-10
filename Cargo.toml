@@ -5,6 +5,7 @@ authors = ["William Boman <william@redwill.se>"]
 edition = "2021"
 
 [dependencies]
+chrono = "0.4.24"
 crates_io_api = "0.8.1"
 http = "0.2"
 parse_link_header = "0.3.3"
@@ -113,3 +114,7 @@ path = "api/golang/[package]/versions/all.rs"
 [[bin]]
 name = "mason-sponsors"
 path = "api/mason/sponsors.rs"
+
+[[bin]]
+name = "mason-renovate-badge"
+path = "api/mason/renovate/badge.rs"

@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mason-org/mason-registry-api/schemas/badge",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "label", "message", "color"],
+  "properties": {
+    "schemaVersion": {
+      "type": "number"
+    },
+    "label": {
+      "type": "string"
+    },
+    "message": {
+      "type": "string"
+    },
+    "color": {
+      "type": "string",
+      "enum": [
+        "brightgreen",
+        "green",
+        "yellowgreen",
+        "yellow",
+        "orange",
+        "red",
+        "lightgrey",
+        "blue"
+      ]
+    }
+  }
+}
