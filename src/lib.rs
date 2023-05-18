@@ -48,11 +48,11 @@ pub enum CacheControl {
 }
 
 impl CacheControl {
-    pub fn get_header(&self) -> String {
+    pub fn get_header(&self) -> &'static str {
         match self {
-            CacheControl::NoStore => "no-store".to_owned(),
-            CacheControl::PublicShort => "s-maxage=60, stale-while-revalidate=120".to_owned(),
-            CacheControl::PublicMedium => "s-maxage=1800".to_owned(),
+            CacheControl::NoStore => "no-store",
+            CacheControl::PublicShort => "max-age=0, s-maxage=60, stale-while-revalidate=120",
+            CacheControl::PublicMedium => "max-age=0, s-maxage=1800",
         }
     }
 }
