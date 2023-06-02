@@ -18,7 +18,7 @@ async fn handler(request: Request) -> Result<Response<Body>, Error> {
     let registry_repo = GitHubRepo::new("mason-org".to_owned(), "mason-registry".to_owned());
     match manager.get_badge(&registry_repo) {
         Ok(badge) => {
-            mason_registry_api::vercel::ok_json(badge, mason_registry_api::CacheControl::NoStore)
+            mason_registry_api::vercel::ok_json(badge, mason_registry_api::CacheControl::PublicShort)
         }
         Err(err) => mason_registry_api::vercel::err_json(err),
     }

@@ -70,12 +70,23 @@ impl RenovateManager {
     }
 
     pub fn get_badge(&self, repo: &GitHubRepo) -> Result<Badge, RenovateError> {
-        let jobs = self.client.fetch_github_jobs(repo)?.jobs;
-        if let Some(job) = jobs.iter().rev().find(|job| job.result == JobResult::Done) {
-            let date_time = DateTime::parse_from_rfc3339(&job.ended).map_err(|err| {
-                tracing::error!("Failed to parse job ended timestamp {}: {}", job.ended, err);
-                RenovateError::InternalError
-            })?;
+        let jobs = self.client.fetch_github_jobs(repo)?.recent_jobs;
+        if let Some(job) = jobs.iter().find(|job| job.result == JobResult::Done) {
+            let date_time = job
+                .finished_at
+                .as_ref()
+                .ok_or(RenovateError::InternalError)
+                .and_then(|s| {
+                    DateTime::parse_from_rfc3339(s).map_err(|_| RenovateError::InternalError)
+                })
+                .map_err(|err| {
+                    tracing::error!(
+                        "Failed to parse job ended timestamp {:?}: {}",
+                        job.finished_at,
+                        err
+                    );
+                    err
+                })?;
             let delta = Self::get_duration_since(date_time, Utc::now());
             let rel_ts = Self::get_relative_timestamp(delta);
 

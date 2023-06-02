@@ -20,7 +20,7 @@ impl<'de> Visitor<'de> for JobResultVisitor {
         E: serde::de::Error,
     {
         match v {
-            "done" => Ok(JobResult::Done),
+            "DONE" => Ok(JobResult::Done),
             _ => Ok(JobResult::Other(v.to_owned())),
         }
     }
@@ -30,7 +30,7 @@ impl<'de> Visitor<'de> for JobResultVisitor {
         E: serde::de::Error,
     {
         match v.as_str() {
-            "done" => Ok(JobResult::Done),
+            "DONE" => Ok(JobResult::Done),
             _ => Ok(JobResult::Other(v)),
         }
     }
@@ -47,13 +47,14 @@ impl<'de> Deserialize<'de> for JobResult {
 
 #[derive(Deserialize, Debug)]
 pub struct Job {
-    pub ended: String, // TODO date
-    #[serde(rename(deserialize = "jobId"))]
-    pub job_id: u64,
+    #[serde(rename(deserialize = "finishedAt"))]
+    pub finished_at: Option<String>, // RFC3339 datestring
+    pub id: String, // UUID
     pub result: JobResult,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct JobsResponse {
-    pub jobs: Vec<Job>,
+    #[serde(rename(deserialize = "recentJobs"))]
+    pub recent_jobs: Vec<Job>,
 }
