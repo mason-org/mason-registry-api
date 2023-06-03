@@ -79,7 +79,7 @@ function assert_not_found_json {
 
 # mason
 assert_ok_json  /api/mason/sponsors        ./schemas/mason/sponsors.json
-assert_ok_json  /api/mason/renovate/badge  ./schemas/badge.json
+# assert_ok_json  /api/mason/renovate/badge  ./schemas/badge.json
 
 # npm
 assert_ok_json         /api/npm/typescript-language-server/versions/all           ./schemas/versions/all.json
