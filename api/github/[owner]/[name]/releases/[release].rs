@@ -3,9 +3,9 @@ use mason_registry_api::{
     github::{client::GitHubClient, manager::GitHubManager, GitHubTag},
     QueryParams,
 };
-use vercel_runtime::{run, Body, Error, Request, Response};
+use vercel_runtime::{Body, Error, Request, Response};
 
-async fn handler(request: Request) -> Result<Response<Body>, Error> {
+pub async fn handler(request: Request) -> Result<Response<Body>, Error> {
     let api_key: String = std::env::var("GITHUB_API_KEY")?;
 
     if request.method() != Method::GET {
@@ -27,10 +27,4 @@ async fn handler(request: Request) -> Result<Response<Body>, Error> {
         ),
         Err(err) => mason_registry_api::vercel::err_json(err),
     }
-}
-
-#[tokio::main]
-async fn main() -> Result<(), Error> {
-    mason_registry_api::setup_tracing();
-    run(handler).await
 }

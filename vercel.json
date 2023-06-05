@@ -1,8 +1,8 @@
 {
   "ignoreCommand": "[ \"$VERCEL_ENV\" != production ]",
   "functions": {
-    "api/**/*.rs": {
-      "runtime": "vercel-rust@4.0.0-beta.1"
+    "api/main.rs": {
+      "runtime": "vercel-rust@4.0.1"
     }
   },
   "rewrites": [
