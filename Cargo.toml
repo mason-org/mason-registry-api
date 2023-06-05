@@ -18,7 +18,7 @@ tokio = { version = "1.28.2", features = ["macros"] }
 tracing = { version = "0.1.38", features = ["log"]}
 tracing-subscriber = { version = "0.3.17", default-features = false, features = ["fmt"] }
 url = "2.4.0"
-vercel_runtime = "1.0.1"
+vercel_runtime = "1.0.2"
 
 [lib]
 path = "src/lib.rs"
