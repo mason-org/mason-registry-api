@@ -10,7 +10,6 @@ pub struct RubyGemDto {
 
 #[derive(Deserialize, Serialize)]
 pub struct RubyGemVersionDto {
-    pub description: String,
     #[serde(rename(deserialize = "number"))]
     pub version: String,
     pub licenses: Option<Vec<String>>,
