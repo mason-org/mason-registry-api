@@ -10,6 +10,7 @@ pub mod github;
 pub mod golang;
 pub mod http;
 pub mod npm;
+pub mod openvsx;
 pub mod packagist;
 pub mod pypi;
 pub mod renovate;

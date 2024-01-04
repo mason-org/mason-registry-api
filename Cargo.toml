@@ -118,3 +118,11 @@ path = "api/mason/sponsors.rs"
 [[bin]]
 name = "mason-renovate-badge"
 path = "api/mason/renovate/badge.rs"
+
+[[bin]]
+name = "openvsx-versions-latest"
+path = "api/openvsx/[namespace]/[extension]/versions/latest.rs"
+
+[[bin]]
+name = "openvsx-versions-all"
+path = "api/openvsx/[namespace]/[extension]/versions/all.rs"
