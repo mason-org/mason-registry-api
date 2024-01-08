@@ -6,7 +6,7 @@ edition = "2021"
 
 [dependencies]
 chrono = "0.4.31"
-crates_io_api = "0.8.2"
+crates_io_api = "0.9.0"
 http = "0.2.11"
 parse_link_header = "0.3.3"
 reqwest = { version = "0.11.23", features = ["blocking", "json"] }

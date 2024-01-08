@@ -202,9 +202,9 @@ checksum = "06ea2b9bc92be3c2baa9334a323ebca2d6f074ff852cd1d7b11064035cd3868f"
 
 [[package]]
 name = "crates_io_api"
-version = "0.8.2"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0346712abc6ffc5b287637815c838f6126ff62df37f12806fa029e66c0ec285c"
+checksum = "cb0122a67287f6795360b83a542cf2fbb3eb57a42729966c9ac792598c909902"
 dependencies = [
  "chrono",
  "futures",
