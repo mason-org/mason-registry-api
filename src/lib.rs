@@ -53,7 +53,7 @@ impl CacheControl {
         match self {
             CacheControl::NoStore => "no-store",
             CacheControl::PublicShort => "max-age=0, s-maxage=60, stale-while-revalidate=120",
-            CacheControl::PublicMedium => "max-age=0, s-maxage=1800",
+            CacheControl::PublicMedium => "max-age=0, s-maxage=900",
         }
     }
 }
