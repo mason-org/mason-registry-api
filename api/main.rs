@@ -1,5 +1,5 @@
 use mason_registry_api::setup_tracing;
-use vercel_runtime::{run, bundled_api, Error, Request, Response, Body};
+use vercel_runtime::{run, bundled_api, Error};
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {

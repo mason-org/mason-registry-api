@@ -126,6 +126,10 @@ assert_not_found_json  /api/crate/crates_io_api/versions/17287138
 # golang
 assert_ok_json  /api/golang/golang.org%2Fx%2Ftools%2Fgopls/versions/all  ./schemas/versions/all.json
 
+# openvsx
+assert_ok_json         /api/openvsx/vscjava/vscode-java-test/versions/all       ./schemas/versions/all.json
+assert_ok_json         /api/openvsx/vscjava/vscode-java-test/versions/latest    ./schemas/versions/version.json
+
 if [[ $(wc -l "$ERRORS" | awk '{print $1}') -gt 0 ]]; then
     exit 1
 fi

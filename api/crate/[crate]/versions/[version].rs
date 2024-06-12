@@ -20,8 +20,8 @@ pub async fn handler(request: Request) -> Result<Response<Body>, Error> {
     let manager = CratesManager::new();
 
     match manager.get_crate_version(crate_pkg, version) {
-        Ok(crate_response) => mason_registry_api::vercel::ok_json(
-            CrateResponse::from_crate_response(version.to_owned(), crate_response),
+        Ok(crate_response) => mason_registry_api::vercel::ok_json::<CrateResponse>(
+            crate_response.into(),
             mason_registry_api::CacheControl::PublicMedium,
         ),
         Err(err) => mason_registry_api::vercel::err_json(err),

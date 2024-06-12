@@ -8,6 +8,7 @@ pub struct PyPiProjectInfoDto {
     pub name: String,
     pub version: String,
     pub license: Option<String>, // probably not an option idk
+    pub requires_python: Option<String>,
 }
 
 #[derive(Deserialize)]

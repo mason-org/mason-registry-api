@@ -1,7 +1,7 @@
 use http::{Method, StatusCode};
 use mason_registry_api::{
     github::{client::GitHubClient, manager::GitHubManager},
-    QueryParams,
+    CacheControl, QueryParams,
 };
 use vercel_runtime::{Body, Error, Request, Response};
 
@@ -20,7 +20,9 @@ pub async fn handler(request: Request) -> Result<Response<Body>, Error> {
     let manager = GitHubManager::new(GitHubClient::new(api_key));
 
     match manager.get_latest_release(&repo) {
-        Ok(latest_release) => mason_registry_api::vercel::ok_json(latest_release, repo.into()),
+        Ok(latest_release) => {
+            mason_registry_api::vercel::ok_json(latest_release, CacheControl::PublicShort)
+        }
         Err(err) => mason_registry_api::vercel::err_json(err),
     }
 }

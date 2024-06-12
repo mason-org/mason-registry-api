@@ -8,7 +8,7 @@ pub struct GolangManager {
 
 fn semver_sort_desc(a: &String, b: &String) -> Ordering {
     let a_semver = a.strip_prefix("v").unwrap_or(a).parse::<semver::Version>();
-    let b_semver = b.strip_prefix("v").unwrap_or(a).parse::<semver::Version>();
+    let b_semver = b.strip_prefix("v").unwrap_or(b).parse::<semver::Version>();
     if let (Ok(a), Ok(b)) = (&a_semver, &b_semver) {
         return b.cmp(a);
     }

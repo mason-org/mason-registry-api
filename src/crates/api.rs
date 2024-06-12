@@ -6,14 +6,11 @@ pub struct CrateResponse {
     pub version: String,
 }
 
-impl CrateResponse {
-    pub fn from_crate_response(
-        version: String,
-        response: crates_io_api::CrateResponse,
-    ) -> CrateResponse {
-        CrateResponse {
-            name: response.crate_data.name,
-            version,
+impl From<crates_io_api::CrateResponse> for CrateResponse {
+    fn from(value: crates_io_api::CrateResponse) -> Self {
+        Self {
+            name: value.crate_data.name,
+            version: value.crate_data.max_version
         }
     }
 }
