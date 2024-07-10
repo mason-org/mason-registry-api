@@ -23,7 +23,7 @@ async fn handler(request: Request) -> Result<Response<Body>, Error> {
     match manager.get_project_version(&pypi_package, version) {
         Ok(package) => mason_registry_api::vercel::ok_json(
             package.info,
-            mason_registry_api::CacheControl::PublicMedium,
+            mason_registry_api::CacheControl::PublicLong,
         ),
         Err(err) => mason_registry_api::vercel::err_json(err),
     }

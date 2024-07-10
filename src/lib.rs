@@ -46,6 +46,7 @@ pub enum CacheControl {
     NoStore,
     PublicShort,
     PublicMedium,
+    PublicLong,
 }
 
 impl CacheControl {
@@ -54,6 +55,7 @@ impl CacheControl {
             CacheControl::NoStore => "no-store",
             CacheControl::PublicShort => "max-age=0, s-maxage=60, stale-while-revalidate=120",
             CacheControl::PublicMedium => "max-age=0, s-maxage=900",
+            CacheControl::PublicLong => "max-age=0, s-maxage=3600",
         }
     }
 }
