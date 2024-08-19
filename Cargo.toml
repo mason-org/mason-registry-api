@@ -8,7 +8,7 @@ edition = "2021"
 chrono = "0.4.38"
 crates_io_api = "0.11"
 http = "1"
-parse_link_header = "0.3.3"
+parse_link_header = "0.4.0"
 reqwest = { version = "0.12", features = ["blocking", "json"] }
 semver = "1.0.23"
 serde = { version = "1.0.203", features = ["derive"] }
