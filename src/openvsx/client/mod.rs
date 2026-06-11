@@ -60,7 +60,7 @@ impl OpenVSXClient {
     ) -> Result<OpenVSXExtensionVersionsDto, reqwest::Error> {
         let query = vec![("size", size), ("offset", offset)];
         self.client
-            .get_with_query(OpenVSXEndpoint::ExtensionVersions(extension), &query)?
+            .get_with_query(OpenVSXEndpoint::ExtensionVersions(extension), &query)
             .await?
             .json()
             .await
