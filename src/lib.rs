@@ -33,19 +33,19 @@ impl QueryParams {
     }
 }
 
+impl From<&str> for QueryParams {
+    fn from(s: &str) -> Self {
+        QueryParams(
+            url::form_urlencoded::parse(s.as_bytes())
+                .into_owned()
+                .collect(),
+        )
+    }
+}
+
 impl From<&vercel_runtime::Request> for QueryParams {
     fn from(request: &vercel_runtime::Request) -> Self {
-        QueryParams(
-            request
-                .uri()
-                .query()
-                .map(|q| {
-                    url::form_urlencoded::parse(q.as_bytes())
-                        .into_owned()
-                        .collect()
-                })
-                .unwrap_or_default(),
-        )
+        request.uri().query().unwrap_or_default().into()
     }
 }
 
@@ -86,14 +86,10 @@ pub fn setup_tracing() {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use url::Url;
 
     #[test]
     fn should_parse_query_flags() {
-        let query: QueryParams = (&Url::parse(
-            "https://api.mason-registry.dev/api/endpoint?do_something=1&do_something_else=true&do&not=false",
-        )
-        .unwrap()).into();
+        let query: QueryParams = "do_something=1&do_something_else=true&do&not=false".into();
 
         assert!(query.has_flag("do_something"));
         assert!(query.has_flag("do_something_else"));
