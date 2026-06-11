@@ -1,6 +1,6 @@
 pub mod spec;
 
-use self::spec::{OpenVSXExtensionVersionsDto, OpenVSXExtensionDto};
+use self::spec::{OpenVSXExtensionDto, OpenVSXExtensionVersionsDto};
 
 use super::OpenVSXExtension;
 use crate::http::client::{Client, HttpEndpoint};
@@ -41,7 +41,7 @@ impl OpenVSXClient {
         }
     }
 
-    pub fn fetch_latest_extension_version(
+    pub fn fetch_extension(
         &self,
         extension: &OpenVSXExtension,
     ) -> Result<OpenVSXExtensionDto, reqwest::Error> {
@@ -53,9 +53,12 @@ impl OpenVSXClient {
     pub fn fetch_extension_versions(
         &self,
         extension: &OpenVSXExtension,
+        size: u64,
+        offset: u64,
     ) -> Result<OpenVSXExtensionVersionsDto, reqwest::Error> {
+        let query = vec![("size", size), ("offset", offset)];
         self.client
-            .get(OpenVSXEndpoint::ExtensionVersions(extension))?
+            .get_with_query(OpenVSXEndpoint::ExtensionVersions(extension), &query)?
             .json()
     }
 }

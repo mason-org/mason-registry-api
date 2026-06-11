@@ -19,6 +19,8 @@ fn semver_sort_desc(a: &String, b: &String) -> Ordering {
     Ordering::Equal
 }
 
+const VERSIONS_OFFSET: u64 = 50;
+
 impl OpenVSXManager {
     pub fn new(client: OpenVSXClient) -> Self {
         Self { client }
@@ -28,7 +30,7 @@ impl OpenVSXManager {
         &self,
         extension: &OpenVSXExtension,
     ) -> Result<OpenVSXExtensionDto, OpenVSXError> {
-        Ok(self.client.fetch_latest_extension_version(extension)?)
+        Ok(self.client.fetch_extension(extension)?)
     }
 
     /// Returns all extension versions in DESCENDING order.
@@ -36,12 +38,23 @@ impl OpenVSXManager {
         &self,
         extension: &OpenVSXExtension,
     ) -> Result<Vec<String>, OpenVSXError> {
-        let mut unsorted_versions: Vec<String> = self
-            .client
-            .fetch_extension_versions(extension)?
-            .versions
-            .into_keys()
-            .collect();
+        let mut unsorted_versions: Vec<String> = vec![];
+
+        let mut cursor = 0;
+        let mut total_size;
+
+        loop {
+            let response =
+                self.client
+                    .fetch_extension_versions(extension, VERSIONS_OFFSET, cursor)?;
+            total_size = response.total_size;
+            cursor += VERSIONS_OFFSET;
+            unsorted_versions.append(&mut response.versions.into_keys().collect());
+
+            if cursor >= total_size {
+                break;
+            }
+        }
 
         unsorted_versions.sort_by(semver_sort_desc);
         Ok(unsorted_versions)
