@@ -33,14 +33,16 @@ impl GolangClient {
         }
     }
 
-    pub fn fetch_package_versions(
+    pub async fn fetch_package_versions(
         &self,
         package: &GolangPackage,
     ) -> Result<Vec<String>, reqwest::Error> {
         Ok(self
             .client
-            .get(GolangEndpoint::VersionsList(package))?
-            .text()?
+            .get(GolangEndpoint::VersionsList(package))
+            .await?
+            .text()
+            .await?
             .split('\n')
             .filter_map(|line| match line {
                 "" => None,

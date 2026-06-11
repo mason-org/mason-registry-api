@@ -52,10 +52,10 @@ impl NpmClient {
         }
     }
 
-    pub fn fetch_package(
+    pub async fn fetch_package(
         &self,
         package: &NpmPackage,
     ) -> Result<NpmAbbrevPackageDto, reqwest::Error> {
-        self.client.get(NpmEndpoint::Package(package))?.json()
+        self.client.get(NpmEndpoint::Package(package)).await?.json().await
     }
 }

@@ -2,14 +2,14 @@
 name = "mason-registry-api"
 version = "1.0.0"
 authors = ["William Boman <william@redwill.se>"]
-edition = "2021"
+edition = "2024"
 
 [dependencies]
 chrono = "0.4.38"
 crates_io_api = "0.12"
 http = "1"
 parse_link_header = "0.4.0"
-reqwest = { version = "0.12", features = ["blocking", "json"] }
+reqwest = { version = "0.12", features = ["json"] }
 semver = "1.0.23"
 serde = { version = "1.0.203", features = ["derive"] }
 serde_json = "1.0.117"
@@ -18,7 +18,7 @@ tokio = { version = "1.38.0", features = ["macros"] }
 tracing = { version = "0.1.40", features = ["log"]}
 tracing-subscriber = { version = "0.3.18", default-features = false, features = ["fmt"] }
 url = "2.5.1"
-vercel_runtime = "1.1.4"
+vercel_runtime = "2.2.0"
 
 [lib]
 path = "src/lib.rs"
@@ -126,3 +126,8 @@ path = "api/openvsx/[namespace]/[extension]/versions/latest.rs"
 [[bin]]
 name = "openvsx-versions-all"
 path = "api/openvsx/[namespace]/[extension]/versions/all.rs"
+
+[profile.release]
+codegen-units = 1
+lto = "fat"
+opt-level = 3

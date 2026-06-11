@@ -1,14 +1,14 @@
-use http::{Method, StatusCode};
+use http::Method;
 use mason_registry_api::{
+    QueryParams,
     github::{
-        client::{graphql::tags::Tag, GitHubClient},
+        client::{GitHubClient, graphql::tags::Tag},
         manager::GitHubManager,
     },
-    vercel::parse_url,
-    QueryParams,
+    vercel::method_not_allowed,
 };
 use serde::Serialize;
-use vercel_runtime::{run, Body, Error, Request, Response};
+use vercel_runtime::{Error, Request, Response, ResponseBody, run, service_fn};
 
 #[derive(Serialize)]
 struct TagsResponse(Vec<String>);
@@ -19,21 +19,18 @@ impl From<Vec<Tag>> for TagsResponse {
     }
 }
 
-async fn handler(request: Request) -> Result<Response<Body>, Error> {
+async fn handler(request: Request) -> Result<Response<ResponseBody>, Error> {
     let api_key: String = std::env::var("GITHUB_API_KEY")?;
 
     if request.method() != Method::GET {
-        return Ok(Response::builder()
-            .status(StatusCode::METHOD_NOT_ALLOWED)
-            .body(Body::Empty)?);
+        return method_not_allowed();
     }
 
-    let url = parse_url(&request)?;
-    let query_params: QueryParams = (&url).into();
+    let query_params: QueryParams = (&request).into();
     let repo = (&query_params).into();
     let manager = GitHubManager::new(GitHubClient::new(api_key));
 
-    match manager.get_all_tags(&repo) {
+    match manager.get_all_tags(&repo).await {
         Ok(tags) => mason_registry_api::vercel::ok_json::<TagsResponse>(
             tags.into(),
             mason_registry_api::CacheControl::PublicMedium,
@@ -45,5 +42,6 @@ async fn handler(request: Request) -> Result<Response<Body>, Error> {
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     mason_registry_api::setup_tracing();
-    run(handler).await
+    let service = service_fn(handler);
+    run(service).await
 }

@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 pub mod spec;
 
-use http::{header::AUTHORIZATION, HeaderMap};
+use http::{HeaderMap, header::AUTHORIZATION};
 
 use crate::{
     github::GitHubRepo,
@@ -48,8 +48,15 @@ impl RenovateClient {
     }
 
     /// Returns jobs in ASCENDING order.
-    pub fn fetch_github_jobs(&self, repo: &GitHubRepo) -> Result<JobsResponse, reqwest::Error> {
+    pub async fn fetch_github_jobs(
+        &self,
+        repo: &GitHubRepo,
+    ) -> Result<JobsResponse, reqwest::Error> {
         tracing::debug!("Fetching GitHub jobs for repo: {repo}");
-        self.client.get(RenovateEndpoint::GitHubJobs(repo))?.json()
+        self.client
+            .get(RenovateEndpoint::GitHubJobs(repo))
+            .await?
+            .json()
+            .await
     }
 }

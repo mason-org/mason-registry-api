@@ -8,7 +8,7 @@ use crate::{
 };
 
 use super::{
-    client::{spec::JobResult, RenovateClient},
+    client::{RenovateClient, spec::JobResult},
     errors::RenovateError,
 };
 
@@ -69,8 +69,8 @@ impl RenovateManager {
         }
     }
 
-    pub fn get_badge(&self, repo: &GitHubRepo) -> Result<Badge, RenovateError> {
-        let jobs = self.client.fetch_github_jobs(repo)?.jobs;
+    pub async fn get_badge(&self, repo: &GitHubRepo) -> Result<Badge, RenovateError> {
+        let jobs = self.client.fetch_github_jobs(repo).await?.jobs;
         if let Some(job) = jobs.iter().rev().find(|job| job.result == JobResult::Done) {
             let date_time = DateTime::parse_from_rfc3339(&job.ended).map_err(|err| {
                 tracing::error!("Failed to parse job ended timestamp {}: {}", job.ended, err);

@@ -1,10 +1,10 @@
 use super::{
+    RubyGemPackage,
     client::{
-        spec::{RubyGemDto, RubyGemVersionDto},
         RubyGemsClient,
+        spec::{RubyGemDto, RubyGemVersionDto},
     },
     errors::RubyGemsError,
-    RubyGemPackage,
 };
 
 pub struct RubyGemsManager {
@@ -16,16 +16,16 @@ impl RubyGemsManager {
         Self { client }
     }
 
-    pub fn get_gem(&self, gem: &RubyGemPackage) -> Result<RubyGemDto, RubyGemsError> {
-        Ok(self.client.fetch_gem(gem)?)
+    pub async fn get_gem(&self, gem: &RubyGemPackage) -> Result<RubyGemDto, RubyGemsError> {
+        Ok(self.client.fetch_gem(gem).await?)
     }
 
-    pub fn get_gem_version(
+    pub async fn get_gem_version(
         &self,
         gem: &RubyGemPackage,
         version: &str,
     ) -> Result<RubyGemVersionDto, RubyGemsError> {
-        let gem_versions = self.client.fetch_gem_versions(gem)?;
+        let gem_versions = self.client.fetch_gem_versions(gem).await?;
         gem_versions
             .into_iter()
             .find(|gem| gem.version == version)
@@ -33,10 +33,14 @@ impl RubyGemsManager {
     }
 
     /// Returns all package versions in DESCENDING order.
-    pub fn get_all_gem_versions(&self, gem: &RubyGemPackage) -> Result<Vec<String>, RubyGemsError> {
+    pub async fn get_all_gem_versions(
+        &self,
+        gem: &RubyGemPackage,
+    ) -> Result<Vec<String>, RubyGemsError> {
         Ok(self
             .client
-            .fetch_gem_versions(gem)?
+            .fetch_gem_versions(gem)
+            .await?
             .into_iter()
             .filter_map(|gem| {
                 if !gem.prerelease {

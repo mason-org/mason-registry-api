@@ -39,7 +39,7 @@ impl From<&QueryParams> for GitHubRepo {
     }
 }
 
-pub trait GitHubRefId {
+pub trait GitHubRefId: Send + Sync {
     fn get_ref_endpoint(&self) -> String;
 }
 

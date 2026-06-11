@@ -2,14 +2,14 @@ pub mod graphql;
 pub mod response;
 pub mod spec;
 
-use std::{convert::TryInto, fmt::Display};
+use std::fmt::Display;
 
 use parse_link_header::Link;
 use reqwest::{
-    blocking::Response,
-    header::{HeaderMap, ACCEPT, AUTHORIZATION},
+    Response,
+    header::{ACCEPT, AUTHORIZATION, HeaderMap},
 };
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{Serialize, de::DeserializeOwned};
 
 use crate::http::client::{Client, HttpEndpoint};
 
@@ -100,23 +100,28 @@ impl GitHubClient {
         }
     }
 
-    pub fn paginate<T, Init, Cond>(&self, init: Init, cond: Cond) -> Result<Vec<T>, reqwest::Error>
+    pub async fn paginate<T, Cond>(
+        &self,
+        mut cursor: GitHubResponse<Vec<T>>,
+        cond: Cond,
+    ) -> Result<Vec<T>, reqwest::Error>
     where
         T: DeserializeOwned,
-        Init: Fn() -> Result<GitHubResponse<Vec<T>>, reqwest::Error>,
         Cond: Fn(&GitHubResponse<Vec<T>>) -> bool,
     {
         let mut data = Vec::with_capacity(GitHubPagination::MAX_PAGE_LIMIT.into());
-        let mut response = init()?;
         loop {
-            let should_continue = cond(&response);
-            data.append(&mut response.data);
+            let should_continue = cond(&cursor);
+            data.append(&mut cursor.data);
             if !should_continue {
                 break;
             }
-            if let Some(mut links) = response.links {
+            if let Some(mut links) = cursor.links {
                 if let Some(next) = links.remove(&Some("next".to_owned())) {
-                    response = self.client.get(GitHubApiEndpoint::Link(next))?.try_into()?;
+                    cursor = GitHubResponse::from_response(
+                        self.client.get(GitHubApiEndpoint::Link(next)).await?,
+                    )
+                    .await?
                 } else {
                     break;
                 }
@@ -127,97 +132,113 @@ impl GitHubClient {
         Ok(data)
     }
 
-    pub fn fetch_tags(
+    pub async fn fetch_tags(
         &self,
         repo: &GitHubRepo,
         first: u64,
         after: Option<String>,
     ) -> Result<GitHubResponse<TagsQuery>, reqwest::Error> {
-        self.graphql(GraphQLRequest {
-            query: graphql::tags::QUERY.to_owned(),
-            variables: graphql::tags::Variables {
-                owner: repo.owner.clone(),
-                name: repo.name.clone(),
-                first,
-                after,
-            },
-        })?
-        .try_into()
+        GitHubResponse::from_response(
+            self.graphql(GraphQLRequest {
+                query: graphql::tags::QUERY.to_owned(),
+                variables: graphql::tags::Variables {
+                    owner: repo.owner.clone(),
+                    name: repo.name.clone(),
+                    first,
+                    after,
+                },
+            })
+            .await?,
+        )
+        .await
     }
 
-    pub fn fetch_sponsors(
+    pub async fn fetch_sponsors(
         &self,
         login: String,
         first: u64,
         after: Option<String>,
     ) -> Result<GitHubResponse<SponsorsQuery>, reqwest::Error> {
-        self.graphql(GraphQLRequest {
-            query: graphql::sponsors::QUERY.to_owned(),
-            variables: graphql::sponsors::Variables {
-                login,
-                first,
-                after,
-            },
-        })?
-        .try_into()
+        GitHubResponse::from_response(
+            self.graphql(GraphQLRequest {
+                query: graphql::sponsors::QUERY.to_owned(),
+                variables: graphql::sponsors::Variables {
+                    login,
+                    first,
+                    after,
+                },
+            })
+            .await?,
+        )
+        .await
     }
 
-    pub fn fetch_ref<GitRef: GitHubRefId>(
+    pub async fn fetch_ref<GitRef: GitHubRefId>(
         &self,
         repo: &GitHubRepo,
         ref_id: &GitRef,
     ) -> Result<GitHubResponse<GitHubRef>, reqwest::Error> {
-        self.client
-            .get(GitHubApiEndpoint::GitRef(repo, ref_id))?
-            .try_into()
+        GitHubResponse::from_response(
+            self.client
+                .get(GitHubApiEndpoint::GitRef(repo, ref_id))
+                .await?,
+        )
+        .await
     }
 
-    pub fn fetch_releases(
+    pub async fn fetch_releases(
         &self,
         repo: &GitHubRepo,
         pagination: Option<GitHubPagination>,
     ) -> Result<GitHubResponse<Vec<GitHubReleaseDto>>, reqwest::Error> {
-        match pagination {
+        GitHubResponse::from_response(match pagination {
             Some(pagination) => {
                 self.get_with_pagination(GitHubApiEndpoint::Releases(repo), pagination)
+                    .await?
             }
-            None => self.client.get(GitHubApiEndpoint::Releases(repo)),
-        }?
-        .try_into()
+            None => self.client.get(GitHubApiEndpoint::Releases(repo)).await?,
+        })
+        .await
     }
 
-    pub fn fetch_release_by_tag(
+    pub async fn fetch_release_by_tag(
         &self,
         repo: &GitHubRepo,
         release: &GitHubTag,
     ) -> Result<GitHubResponse<GitHubReleaseDto>, reqwest::Error> {
-        self.client
-            .get(GitHubApiEndpoint::ReleaseTag(&repo, &release))?
-            .try_into()
+        GitHubResponse::from_response(
+            self.client
+                .get(GitHubApiEndpoint::ReleaseTag(repo, release))
+                .await?,
+        )
+        .await
     }
 
-    pub fn fetch_latest_release(
+    pub async fn fetch_latest_release(
         &self,
         repo: &GitHubRepo,
     ) -> Result<GitHubResponse<GitHubReleaseDto>, reqwest::Error> {
-        self.client
-            .get(GitHubApiEndpoint::LatestRelease(&repo))?
-            .try_into()
+        GitHubResponse::from_response(
+            self.client
+                .get(GitHubApiEndpoint::LatestRelease(repo))
+                .await?,
+        )
+        .await
     }
 
-    fn graphql<Variables: Serialize>(
+    async fn graphql<Variables: Serialize>(
         &self,
         request: GraphQLRequest<Variables>,
     ) -> Result<Response, reqwest::Error> {
-        self.client.post(GitHubApiEndpoint::GraphQL, &request)
+        self.client.post(GitHubApiEndpoint::GraphQL, &request).await
     }
 
-    fn get_with_pagination(
+    async fn get_with_pagination<'a>(
         &self,
-        endpoint: GitHubApiEndpoint,
+        endpoint: GitHubApiEndpoint<'a>,
         pagination: GitHubPagination,
     ) -> Result<Response, reqwest::Error> {
         let query = vec![("page", pagination.page), ("per_page", pagination.per_page)];
-        self.client.get_with_query(endpoint, &query)
+        self.client.get_with_query(endpoint, &query).await
     }
 }

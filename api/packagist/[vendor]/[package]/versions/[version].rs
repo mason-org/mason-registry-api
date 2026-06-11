@@ -1,25 +1,25 @@
-use http::{Method, StatusCode};
+use http::Method;
 use mason_registry_api::{
-    packagist::{api::PackagistResponse, client::PackagistClient, manager::PackagistManager},
-    vercel::parse_url,
     QueryParams,
+    packagist::{api::PackagistResponse, client::PackagistClient, manager::PackagistManager},
+    vercel::method_not_allowed,
 };
-use vercel_runtime::{run, Body, Error, Request, Response};
+use vercel_runtime::{Error, Request, Response, ResponseBody, run, service_fn};
 
-async fn handler(request: Request) -> Result<Response<Body>, Error> {
+async fn handler(request: Request) -> Result<Response<ResponseBody>, Error> {
     if request.method() != Method::GET {
-        return Ok(Response::builder()
-            .status(StatusCode::METHOD_NOT_ALLOWED)
-            .body(Body::Empty)?);
+        return method_not_allowed();
     }
 
-    let url = parse_url(&request)?;
-    let query_params: QueryParams = (&url).into();
+    let query_params: QueryParams = (&request).into();
     let packagist_package = (&query_params).into();
     let version = query_params.get("version").unwrap();
     let manager = PackagistManager::new(PackagistClient::new());
 
-    match manager.get_package_version(&packagist_package, version) {
+    match manager
+        .get_package_version(&packagist_package, version)
+        .await
+    {
         Ok(package) => mason_registry_api::vercel::ok_json(
             PackagistResponse::from_packagist_package_dto(packagist_package.name, package),
             mason_registry_api::CacheControl::PublicMedium,
@@ -31,5 +31,6 @@ async fn handler(request: Request) -> Result<Response<Body>, Error> {
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     mason_registry_api::setup_tracing();
-    run(handler).await
+    let service = service_fn(handler);
+    run(service).await
 }
