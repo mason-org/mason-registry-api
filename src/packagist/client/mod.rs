@@ -39,10 +39,14 @@ impl PackagistClient {
         }
     }
 
-    pub fn fetch_package(
+    pub async fn fetch_package(
         &self,
         package: &PackagistPackage,
     ) -> Result<PackagistPackageResponseEnvelope, reqwest::Error> {
-        self.client.get(PackagistEndpoint::Package(package))?.json()
+        self.client
+            .get(PackagistEndpoint::Package(package))
+            .await?
+            .json()
+            .await
     }
 }

@@ -17,6 +17,7 @@ pub mod renovate;
 pub mod rubygems;
 pub mod vercel;
 
+#[derive(Debug)]
 pub struct QueryParams(HashMap<String, String>);
 
 impl QueryParams {
@@ -25,20 +26,26 @@ impl QueryParams {
     }
 
     pub fn has_flag(&self, query: &str) -> bool {
-        match self.0.get(query).map(Deref::deref) {
-            Some("") | Some("1") | Some("true") => return true,
-            _ => return false,
-        }
+        matches!(
+            self.0.get(query).map(Deref::deref),
+            Some("") | Some("1") | Some("true")
+        )
     }
 }
 
-impl From<&url::Url> for QueryParams {
-    fn from(url: &url::Url) -> Self {
-        let mut query = HashMap::new();
-        for (key, val) in url.query_pairs().into_owned() {
-            query.insert(key, val);
-        }
-        QueryParams(query)
+impl From<&str> for QueryParams {
+    fn from(s: &str) -> Self {
+        QueryParams(
+            url::form_urlencoded::parse(s.as_bytes())
+                .into_owned()
+                .collect(),
+        )
+    }
+}
+
+impl From<&vercel_runtime::Request> for QueryParams {
+    fn from(request: &vercel_runtime::Request) -> Self {
+        request.uri().query().unwrap_or_default().into()
     }
 }
 
@@ -79,14 +86,10 @@ pub fn setup_tracing() {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use url::Url;
 
     #[test]
     fn should_parse_query_flags() {
-        let query: QueryParams = (&Url::parse(
-            "https://api.mason-registry.dev/api/endpoint?do_something=1&do_something_else=true&do&not=false",
-        )
-        .unwrap()).into();
+        let query: QueryParams = "do_something=1&do_something_else=true&do&not=false".into();
 
         assert!(query.has_flag("do_something"));
         assert!(query.has_flag("do_something_else"));

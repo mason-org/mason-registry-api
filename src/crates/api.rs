@@ -10,7 +10,7 @@ impl From<crates_io_api::CrateResponse> for CrateResponse {
     fn from(value: crates_io_api::CrateResponse) -> Self {
         Self {
             name: value.crate_data.name,
-            version: value.crate_data.max_version
+            version: value.crate_data.max_version,
         }
     }
 }

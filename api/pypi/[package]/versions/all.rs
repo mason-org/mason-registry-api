@@ -1,25 +1,22 @@
-use http::{Method, StatusCode};
+use http::Method;
 use mason_registry_api::{
-    pypi::{client::PyPiClient, manager::PyPiManager},
-    vercel::parse_url,
     QueryParams,
+    pypi::{client::PyPiClient, manager::PyPiManager},
+    vercel::method_not_allowed,
 };
 
-use vercel_runtime::{run, Body, Error, Request, Response};
+use vercel_runtime::{Error, Request, Response, ResponseBody, run, service_fn};
 
-async fn handler(request: Request) -> Result<Response<Body>, Error> {
+async fn handler(request: Request) -> Result<Response<ResponseBody>, Error> {
     if request.method() != Method::GET {
-        return Ok(Response::builder()
-            .status(StatusCode::METHOD_NOT_ALLOWED)
-            .body(Body::Empty)?);
+        return method_not_allowed();
     }
 
-    let url = parse_url(&request)?;
-    let query_params: QueryParams = (&url).into();
+    let query_params: QueryParams = (&request).into();
     let pypi_package = (&query_params).into();
     let manager = PyPiManager::new(PyPiClient::new());
 
-    match manager.get_all_package_versions(&pypi_package) {
+    match manager.get_all_package_versions(&pypi_package).await {
         Ok(versions) => mason_registry_api::vercel::ok_json(
             versions,
             mason_registry_api::CacheControl::PublicMedium,
@@ -31,5 +28,6 @@ async fn handler(request: Request) -> Result<Response<Body>, Error> {
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     mason_registry_api::setup_tracing();
-    run(handler).await
+    let service = service_fn(handler);
+    run(service).await
 }

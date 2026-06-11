@@ -1,26 +1,24 @@
-use http::{Method, StatusCode};
+use http::Method;
 use mason_registry_api::{
-    github::{api::TagResponse, client::GitHubClient, manager::GitHubManager, GitHubTag},
     QueryParams,
+    github::{GitHubTag, api::TagResponse, client::GitHubClient, manager::GitHubManager},
+    vercel::method_not_allowed,
 };
-use vercel_runtime::{run, Body, Error, Request, Response};
+use vercel_runtime::{Error, Request, Response, ResponseBody, run, service_fn};
 
-async fn handler(request: Request) -> Result<Response<Body>, Error> {
+async fn handler(request: Request) -> Result<Response<ResponseBody>, Error> {
     let api_key: String = std::env::var("GITHUB_API_KEY")?;
 
     if request.method() != Method::GET {
-        return Ok(Response::builder()
-            .status(StatusCode::METHOD_NOT_ALLOWED)
-            .body(Body::Empty)?);
+        return method_not_allowed();
     }
 
-    let url = mason_registry_api::vercel::parse_url(&request)?;
-    let query_params: QueryParams = (&url).into();
+    let query_params: QueryParams = (&request).into();
     let tag: GitHubTag = query_params.get("tag").unwrap().parse()?;
     let repo = (&query_params).into();
     let manager = GitHubManager::new(GitHubClient::new(api_key));
 
-    match manager.get_ref(&repo, &tag) {
+    match manager.get_ref(&repo, &tag).await {
         Ok(github_ref) => mason_registry_api::vercel::ok_json::<TagResponse>(
             github_ref.into(),
             mason_registry_api::CacheControl::PublicMedium,
@@ -32,5 +30,6 @@ async fn handler(request: Request) -> Result<Response<Body>, Error> {
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     mason_registry_api::setup_tracing();
-    run(handler).await
+    let service = service_fn(handler);
+    run(service).await
 }

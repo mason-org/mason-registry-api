@@ -1,24 +1,21 @@
-use http::{Method, StatusCode};
+use http::Method;
 use mason_registry_api::{
-    openvsx::{api::OpenVSXExtensionResponse, client::OpenVSXClient, manager::OpenVSXManager},
-    vercel::parse_url,
     QueryParams,
+    openvsx::{api::OpenVSXExtensionResponse, client::OpenVSXClient, manager::OpenVSXManager},
+    vercel::method_not_allowed,
 };
-use vercel_runtime::{run, Body, Error, Request, Response};
+use vercel_runtime::{Error, Request, Response, ResponseBody, run, service_fn};
 
-async fn handler(request: Request) -> Result<Response<Body>, Error> {
+async fn handler(request: Request) -> Result<Response<ResponseBody>, Error> {
     if request.method() != Method::GET {
-        return Ok(Response::builder()
-            .status(StatusCode::METHOD_NOT_ALLOWED)
-            .body(Body::Empty)?);
+        return method_not_allowed();
     }
 
-    let url = parse_url(&request)?;
-    let query_params: QueryParams = (&url).into();
+    let query_params: QueryParams = (&request).into();
     let extension = (&query_params).into();
     let manager = OpenVSXManager::new(OpenVSXClient::new());
 
-    match manager.get_extension(&extension) {
+    match manager.get_extension(&extension).await {
         Ok(extension_dto) => mason_registry_api::vercel::ok_json::<OpenVSXExtensionResponse>(
             extension_dto.into(),
             mason_registry_api::CacheControl::PublicMedium,
@@ -30,5 +27,6 @@ async fn handler(request: Request) -> Result<Response<Body>, Error> {
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     mason_registry_api::setup_tracing();
-    run(handler).await
+    let service = service_fn(handler);
+    run(service).await
 }

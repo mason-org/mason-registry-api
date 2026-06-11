@@ -1,12 +1,12 @@
 use std::cmp::Ordering;
 
 use super::{
+    PyPiPackage,
     client::{
-        spec::{PyPiProjectDto, PyPiProjectVersionedDto},
         PyPiClient,
+        spec::{PyPiProjectDto, PyPiProjectVersionedDto},
     },
     errors::PyPiError,
-    PyPiPackage,
 };
 
 pub struct PyPiManager {
@@ -28,25 +28,25 @@ impl PyPiManager {
         Self { client }
     }
 
-    pub fn get_project(&self, package: &PyPiPackage) -> Result<PyPiProjectDto, PyPiError> {
-        Ok(self.client.fetch_project(package)?)
+    pub async fn get_project(&self, package: &PyPiPackage) -> Result<PyPiProjectDto, PyPiError> {
+        Ok(self.client.fetch_project(package).await?)
     }
 
-    pub fn get_project_version(
+    pub async fn get_project_version(
         &self,
         package: &PyPiPackage,
         version: &str,
     ) -> Result<PyPiProjectVersionedDto, PyPiError> {
-        Ok(self.client.fetch_project_version(&package, version)?)
+        Ok(self.client.fetch_project_version(&package, version).await?)
     }
 
     /// Returns all package versions in DESCENDING order.
     /// Ordering should not be relied upon as it does not strictly follow pip's version ordering.
-    pub fn get_all_package_versions(
+    pub async fn get_all_package_versions(
         &self,
         package: &PyPiPackage,
     ) -> Result<Vec<String>, PyPiError> {
-        let project = self.client.fetch_project(package)?;
+        let project = self.client.fetch_project(package).await?;
         let mut versions: Vec<String> = project.releases.into_keys().into_iter().collect();
         // This is not at all according to pip's version sorting [1], but it makes the vector nicer to the eye.
         // [1]: https://github.com/pypa/pip/blob/d6e333fb636424d7dca15f4e8aa61cdaab9cdd31/src/pip/_vendor/packaging/version.py#L223-L288

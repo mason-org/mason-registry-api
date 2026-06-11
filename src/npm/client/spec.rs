@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use serde::{de::Visitor, Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de::Visitor};
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct NpmAbbrevPackageVersionDto {

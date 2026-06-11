@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 
-use super::{client::GolangClient, errors::GolangError, GolangPackage};
+use super::{GolangPackage, client::GolangClient, errors::GolangError};
 
 pub struct GolangManager {
     client: GolangClient,
@@ -21,8 +21,11 @@ impl GolangManager {
     }
 
     /// Returns all package versions in DESCENDING order.
-    pub fn get_all_versions(&self, package: &GolangPackage) -> Result<Vec<String>, GolangError> {
-        let mut unsorted_versions = self.client.fetch_package_versions(package)?;
+    pub async fn get_all_versions(
+        &self,
+        package: &GolangPackage,
+    ) -> Result<Vec<String>, GolangError> {
+        let mut unsorted_versions = self.client.fetch_package_versions(package).await?;
         unsorted_versions.sort_by(semver_sort_desc);
         Ok(unsorted_versions)
     }

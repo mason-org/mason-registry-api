@@ -41,14 +41,22 @@ impl RubyGemsClient {
         }
     }
 
-    pub fn fetch_gem(&self, gem: &RubyGemPackage) -> Result<RubyGemDto, reqwest::Error> {
-        self.client.get(RubyGemsEndpoint::Gem(gem))?.json()
+    pub async fn fetch_gem(&self, gem: &RubyGemPackage) -> Result<RubyGemDto, reqwest::Error> {
+        self.client
+            .get(RubyGemsEndpoint::Gem(gem))
+            .await?
+            .json()
+            .await
     }
 
-    pub fn fetch_gem_versions(
+    pub async fn fetch_gem_versions(
         &self,
         gem: &RubyGemPackage,
     ) -> Result<Vec<RubyGemVersionDto>, reqwest::Error> {
-        self.client.get(RubyGemsEndpoint::GemVersions(gem))?.json()
+        self.client
+            .get(RubyGemsEndpoint::GemVersions(gem))
+            .await?
+            .json()
+            .await
     }
 }

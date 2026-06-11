@@ -1,11 +1,11 @@
 use reqwest::{
-    blocking::Response,
-    header::{HeaderMap, ACCEPT, USER_AGENT},
+    Response,
+    header::{ACCEPT, HeaderMap, USER_AGENT},
 };
 use serde::Serialize;
 
 pub struct Client {
-    client: reqwest::blocking::Client,
+    client: reqwest::Client,
     headers: Option<HeaderMap>,
 }
 
@@ -17,7 +17,7 @@ impl Client {
     pub fn new(headers: Option<HeaderMap>) -> Self {
         Self {
             headers,
-            client: reqwest::blocking::Client::new(),
+            client: reqwest::Client::new(),
         }
     }
 
@@ -36,7 +36,7 @@ impl Client {
         headers
     }
 
-    pub fn get_with_query<Endpoint: HttpEndpoint, Query: Serialize + ?Sized>(
+    pub async fn get_with_query<Endpoint: HttpEndpoint, Query: Serialize + ?Sized>(
         &self,
         endpoint: Endpoint,
         query: &Query,
@@ -45,22 +45,24 @@ impl Client {
             .get(endpoint.as_full_url())
             .query(query)
             .headers(self.headers())
-            .send()?
+            .send()
+            .await?
             .error_for_status()
     }
 
-    pub fn get<Endpoint: HttpEndpoint>(
+    pub async fn get<Endpoint: HttpEndpoint>(
         &self,
         endpoint: Endpoint,
     ) -> Result<Response, reqwest::Error> {
         self.client
             .get(endpoint.as_full_url())
             .headers(self.headers())
-            .send()?
+            .send()
+            .await?
             .error_for_status()
     }
 
-    pub fn post<Json: Serialize, Endpoint: HttpEndpoint>(
+    pub async fn post<Json: Serialize, Endpoint: HttpEndpoint>(
         &self,
         endpoint: Endpoint,
         json: &Json,
@@ -69,7 +71,8 @@ impl Client {
             .post(endpoint.as_full_url())
             .headers(self.headers())
             .json(json)
-            .send()?
+            .send()
+            .await?
             .error_for_status()
     }
 }

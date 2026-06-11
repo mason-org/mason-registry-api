@@ -1,10 +1,13 @@
-use http::{Method, StatusCode};
-use mason_registry_api::github::{
-    client::{graphql::sponsors::Sponsor, GitHubClient},
-    manager::GitHubManager,
+use http::Method;
+use mason_registry_api::{
+    github::{
+        client::{GitHubClient, graphql::sponsors::Sponsor},
+        manager::GitHubManager,
+    },
+    vercel::method_not_allowed,
 };
 use serde::Serialize;
-use vercel_runtime::{run, Body, Error, Request, Response};
+use vercel_runtime::{Error, Request, Response, ResponseBody, run, service_fn};
 
 #[derive(Serialize)]
 pub struct SponsorsResponse {
@@ -19,17 +22,15 @@ impl From<Vec<Sponsor>> for SponsorsResponse {
     }
 }
 
-async fn handler(request: Request) -> Result<Response<Body>, Error> {
+async fn handler(request: Request) -> Result<Response<ResponseBody>, Error> {
     let api_key: String = std::env::var("GITHUB_API_KEY")?;
 
     if request.method() != Method::GET {
-        return Ok(Response::builder()
-            .status(StatusCode::METHOD_NOT_ALLOWED)
-            .body(Body::Empty)?);
+        return method_not_allowed();
     }
 
     let manager = GitHubManager::new(GitHubClient::new(api_key));
-    match manager.get_all_sponsors("williamboman".to_owned()) {
+    match manager.get_all_sponsors("williamboman".to_owned()).await {
         Ok(sponsors) => mason_registry_api::vercel::ok_json::<SponsorsResponse>(
             sponsors.into(),
             mason_registry_api::CacheControl::PublicMedium,
@@ -41,5 +42,6 @@ async fn handler(request: Request) -> Result<Response<Body>, Error> {
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     mason_registry_api::setup_tracing();
-    run(handler).await
+    let service = service_fn(handler);
+    run(service).await
 }
