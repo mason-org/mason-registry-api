@@ -1,9 +1,9 @@
 use std::cmp::Ordering;
 
 use super::{
-    client::{spec::OpenVSXExtensionDto, OpenVSXClient},
-    errors::OpenVSXError,
     OpenVSXExtension,
+    client::{OpenVSXClient, spec::OpenVSXExtensionDto},
+    errors::OpenVSXError,
 };
 
 pub struct OpenVSXManager {
@@ -26,15 +26,15 @@ impl OpenVSXManager {
         Self { client }
     }
 
-    pub fn get_extension(
+    pub async fn get_extension(
         &self,
         extension: &OpenVSXExtension,
     ) -> Result<OpenVSXExtensionDto, OpenVSXError> {
-        Ok(self.client.fetch_extension(extension)?)
+        Ok(self.client.fetch_extension(extension).await?)
     }
 
     /// Returns all extension versions in DESCENDING order.
-    pub fn get_all_versions(
+    pub async fn get_all_versions(
         &self,
         extension: &OpenVSXExtension,
     ) -> Result<Vec<String>, OpenVSXError> {
@@ -44,9 +44,10 @@ impl OpenVSXManager {
         let mut total_size;
 
         loop {
-            let response =
-                self.client
-                    .fetch_extension_versions(extension, VERSIONS_OFFSET, cursor)?;
+            let response = self
+                .client
+                .fetch_extension_versions(extension, VERSIONS_OFFSET, cursor)
+                .await?;
             total_size = response.total_size;
             cursor += VERSIONS_OFFSET;
             unsorted_versions.append(&mut response.versions.into_keys().collect());

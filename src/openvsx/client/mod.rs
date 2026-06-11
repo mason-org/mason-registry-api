@@ -41,16 +41,18 @@ impl OpenVSXClient {
         }
     }
 
-    pub fn fetch_extension(
+    pub async fn fetch_extension(
         &self,
         extension: &OpenVSXExtension,
     ) -> Result<OpenVSXExtensionDto, reqwest::Error> {
         self.client
-            .get(OpenVSXEndpoint::Extension(extension))?
+            .get(OpenVSXEndpoint::Extension(extension))
+            .await?
             .json()
+            .await
     }
 
-    pub fn fetch_extension_versions(
+    pub async fn fetch_extension_versions(
         &self,
         extension: &OpenVSXExtension,
         size: u64,
@@ -59,6 +61,8 @@ impl OpenVSXClient {
         let query = vec![("size", size), ("offset", offset)];
         self.client
             .get_with_query(OpenVSXEndpoint::ExtensionVersions(extension), &query)?
+            .await?
             .json()
+            .await
     }
 }

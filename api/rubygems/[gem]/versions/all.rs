@@ -1,24 +1,21 @@
-use http::{Method, StatusCode};
+use http::Method;
 use mason_registry_api::{
-    rubygems::{client::RubyGemsClient, manager::RubyGemsManager},
-    vercel::parse_url,
     QueryParams,
+    rubygems::{client::RubyGemsClient, manager::RubyGemsManager},
+    vercel::method_not_allowed,
 };
-use vercel_runtime::{run, Body, Error, Request, Response};
+use vercel_runtime::{Error, Request, Response, ResponseBody, run, service_fn};
 
-async fn handler(request: Request) -> Result<Response<Body>, Error> {
+async fn handler(request: Request) -> Result<Response<ResponseBody>, Error> {
     if request.method() != Method::GET {
-        return Ok(Response::builder()
-            .status(StatusCode::METHOD_NOT_ALLOWED)
-            .body(Body::Empty)?);
+        return method_not_allowed();
     }
 
-    let url = parse_url(&request)?;
-    let query_params: QueryParams = (&url).into();
+    let query_params: QueryParams = (&request).into();
     let gem = (&query_params).into();
     let manager = RubyGemsManager::new(RubyGemsClient::new());
 
-    match manager.get_all_gem_versions(&gem) {
+    match manager.get_all_gem_versions(&gem).await {
         Ok(versions) => mason_registry_api::vercel::ok_json(
             versions,
             mason_registry_api::CacheControl::PublicMedium,
@@ -30,5 +27,6 @@ async fn handler(request: Request) -> Result<Response<Body>, Error> {
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     mason_registry_api::setup_tracing();
-    run(handler).await
+    let service = service_fn(handler);
+    run(service).await
 }

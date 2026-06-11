@@ -1,13 +1,13 @@
 use std::collections::VecDeque;
 
 use super::{
+    GitHubRepo, GitHubTag,
     client::{
+        GitHubClient, GitHubPagination,
         graphql::{sponsors::Sponsor, tags::Tag},
         spec::{GitHubRef, GitHubReleaseDto},
-        GitHubClient, GitHubPagination,
     },
     errors::GitHubError,
-    GitHubRepo, GitHubTag,
 };
 
 pub struct GitHubManager {
@@ -20,14 +20,15 @@ impl GitHubManager {
     }
 
     /// Returns all tags in DESCENDING order.
-    pub fn get_all_tags(&self, repo: &GitHubRepo) -> Result<Vec<Tag>, GitHubError> {
+    pub async fn get_all_tags(&self, repo: &GitHubRepo) -> Result<Vec<Tag>, GitHubError> {
         let mut all_tags: Vec<Tag> = vec![];
         let mut cursor = None;
 
         loop {
-            let response =
-                self.client
-                    .fetch_tags(&repo, GitHubPagination::MAX_PAGE_LIMIT.into(), cursor)?;
+            let response = self
+                .client
+                .fetch_tags(repo, GitHubPagination::MAX_PAGE_LIMIT.into(), cursor)
+                .await?;
             let mut tags = response.data.tags;
             all_tags.append(&mut tags);
 
@@ -38,16 +39,19 @@ impl GitHubManager {
         }
     }
 
-    pub fn get_all_sponsors(&self, login: String) -> Result<Vec<Sponsor>, GitHubError> {
+    pub async fn get_all_sponsors(&self, login: String) -> Result<Vec<Sponsor>, GitHubError> {
         let mut all_sponsors: Vec<Sponsor> = vec![];
         let mut cursor = None;
 
         loop {
-            let response = self.client.fetch_sponsors(
-                login.clone(),
-                GitHubPagination::MAX_PAGE_LIMIT.into(),
-                cursor,
-            )?;
+            let response = self
+                .client
+                .fetch_sponsors(
+                    login.clone(),
+                    GitHubPagination::MAX_PAGE_LIMIT.into(),
+                    cursor,
+                )
+                .await?;
             let mut sponsors = response.data.sponsors;
             all_sponsors.append(&mut sponsors);
 
@@ -58,8 +62,8 @@ impl GitHubManager {
         }
     }
 
-    pub fn get_latest_tag(&self, repo: &GitHubRepo) -> Result<Tag, GitHubError> {
-        let response = self.client.fetch_tags(&repo, 1, None)?;
+    pub async fn get_latest_tag(&self, repo: &GitHubRepo) -> Result<Tag, GitHubError> {
+        let response = self.client.fetch_tags(repo, 1, None).await?;
         let mut tags: VecDeque<Tag> = response.data.tags.into();
         let latest_tag = tags
             .pop_front()
@@ -67,39 +71,49 @@ impl GitHubManager {
         Ok(latest_tag)
     }
 
-    pub fn get_ref(&self, repo: &GitHubRepo, tag: &GitHubTag) -> Result<GitHubRef, GitHubError> {
-        let tag = self.client.fetch_ref(repo, tag)?;
+    pub async fn get_ref(
+        &self,
+        repo: &GitHubRepo,
+        tag: &GitHubTag,
+    ) -> Result<GitHubRef, GitHubError> {
+        let tag = self.client.fetch_ref(repo, tag).await?;
         Ok(tag.data)
     }
 
     /// Returns all releases in DESCENDING order.
-    pub fn get_all_releases(
+    pub async fn get_all_releases(
         &self,
         repo: &GitHubRepo,
     ) -> Result<Vec<GitHubReleaseDto>, GitHubError> {
-        Ok(self.client.paginate(
-            || {
-                self.client.fetch_releases(
-                    &repo,
-                    Some(GitHubPagination {
-                        page: 1,
-                        per_page: GitHubPagination::MAX_PAGE_LIMIT,
-                    }),
-                )
-            },
-            |_| true,
-        )?)
+        Ok(self
+            .client
+            .paginate(
+                self.client
+                    .fetch_releases(
+                        repo,
+                        Some(GitHubPagination {
+                            page: 1,
+                            per_page: GitHubPagination::MAX_PAGE_LIMIT,
+                        }),
+                    )
+                    .await?,
+                |_| true,
+            )
+            .await?)
     }
 
-    pub fn get_latest_release(&self, repo: &GitHubRepo) -> Result<GitHubReleaseDto, GitHubError> {
-        Ok(self.client.fetch_latest_release(&repo)?.data)
+    pub async fn get_latest_release(
+        &self,
+        repo: &GitHubRepo,
+    ) -> Result<GitHubReleaseDto, GitHubError> {
+        Ok(self.client.fetch_latest_release(repo).await?.data)
     }
 
-    pub fn get_release_by_tag(
+    pub async fn get_release_by_tag(
         &self,
         repo: &GitHubRepo,
         release: &GitHubTag,
     ) -> Result<GitHubReleaseDto, GitHubError> {
-        Ok(self.client.fetch_release_by_tag(&repo, &release)?.data)
+        Ok(self.client.fetch_release_by_tag(repo, release).await?.data)
     }
 }

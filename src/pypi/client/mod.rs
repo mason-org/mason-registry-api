@@ -41,17 +41,26 @@ impl PyPiClient {
         }
     }
 
-    pub fn fetch_project(&self, project: &PyPiPackage) -> Result<PyPiProjectDto, reqwest::Error> {
-        self.client.get(PyPiEndpoint::Project(project))?.json()
+    pub async fn fetch_project(
+        &self,
+        project: &PyPiPackage,
+    ) -> Result<PyPiProjectDto, reqwest::Error> {
+        self.client
+            .get(PyPiEndpoint::Project(project))
+            .await?
+            .json()
+            .await
     }
 
-    pub fn fetch_project_version(
+    pub async fn fetch_project_version(
         &self,
         project: &PyPiPackage,
         version: &str,
     ) -> Result<PyPiProjectVersionedDto, reqwest::Error> {
         self.client
-            .get(PyPiEndpoint::ProjectVersion(project, version))?
+            .get(PyPiEndpoint::ProjectVersion(project, version))
+            .await?
             .json()
+            .await
     }
 }

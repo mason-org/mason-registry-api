@@ -1,24 +1,21 @@
-use http::{Method, StatusCode};
+use http::Method;
 use mason_registry_api::{
-    npm::{client::NpmClient, manager::NpmManager},
-    vercel::parse_url,
     QueryParams,
+    npm::{client::NpmClient, manager::NpmManager},
+    vercel::method_not_allowed,
 };
-use vercel_runtime::{run, Body, Error, Request, Response};
+use vercel_runtime::{Error, Request, Response, ResponseBody, run, service_fn};
 
-async fn handler(request: Request) -> Result<Response<Body>, Error> {
+async fn handler(request: Request) -> Result<Response<ResponseBody>, Error> {
     if request.method() != Method::GET {
-        return Ok(Response::builder()
-            .status(StatusCode::METHOD_NOT_ALLOWED)
-            .body(Body::Empty)?);
+        return method_not_allowed();
     }
 
-    let url = parse_url(&request)?;
-    let query_params: QueryParams = (&url).into();
+    let query_params: QueryParams = (&request).into();
     let npm_package = (&query_params).into();
     let manager = NpmManager::new(NpmClient::new());
 
-    match manager.get_package(&npm_package) {
+    match manager.get_package(&npm_package).await {
         Ok(package) => match manager.get_latest_package_version(&package) {
             Ok(package_version) => mason_registry_api::vercel::ok_json(
                 package_version,
@@ -33,5 +30,6 @@ async fn handler(request: Request) -> Result<Response<Body>, Error> {
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     mason_registry_api::setup_tracing();
-    run(handler).await
+    let service = service_fn(handler);
+    run(service).await
 }
