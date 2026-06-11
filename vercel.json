@@ -1,5 +1,4 @@
 {
-  "ignoreCommand": "[ \"$VERCEL_ENV\" != production ]",
   "rewrites": [
     {
       "source": "/api/repo/:path(.*)",
