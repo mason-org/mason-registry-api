@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use super::{errors::CratesError, Crate};
+use super::{Crate, errors::CratesError};
 
 pub struct CratesManager {
     client: crates_io_api::AsyncClient,
@@ -17,12 +17,18 @@ impl CratesManager {
         }
     }
 
-    pub async fn get_crate(&self, crate_pkg: Crate) -> Result<crates_io_api::CrateResponse, CratesError> {
+    pub async fn get_crate(
+        &self,
+        crate_pkg: Crate,
+    ) -> Result<crates_io_api::CrateResponse, CratesError> {
         Ok(self.client.get_crate(&crate_pkg.name).await?)
     }
 
     /// Returns all crate versions in DESCENDING order.
-    pub async fn get_all_crate_versions(&self, crate_pkg: Crate) -> Result<Vec<String>, CratesError> {
+    pub async fn get_all_crate_versions(
+        &self,
+        crate_pkg: Crate,
+    ) -> Result<Vec<String>, CratesError> {
         let crate_response = self.get_crate(crate_pkg).await?;
         return Ok(crate_response.versions.into_iter().map(|v| v.num).collect());
     }

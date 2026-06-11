@@ -2,7 +2,7 @@ pub mod spec;
 
 use std::fmt::Display;
 
-use reqwest::header::{HeaderMap, ACCEPT};
+use reqwest::header::{ACCEPT, HeaderMap};
 
 use crate::http::client::{Client, HttpEndpoint};
 
@@ -56,6 +56,10 @@ impl NpmClient {
         &self,
         package: &NpmPackage,
     ) -> Result<NpmAbbrevPackageDto, reqwest::Error> {
-        self.client.get(NpmEndpoint::Package(package)).await?.json().await
+        self.client
+            .get(NpmEndpoint::Package(package))
+            .await?
+            .json()
+            .await
     }
 }

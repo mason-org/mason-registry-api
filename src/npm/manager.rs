@@ -1,12 +1,12 @@
 use std::cmp::Ordering;
 
 use super::{
+    NpmPackage,
     client::{
-        spec::{NpmAbbrevPackageDto, NpmAbbrevPackageVersionDto, NpmDistTag},
         NpmClient,
+        spec::{NpmAbbrevPackageDto, NpmAbbrevPackageVersionDto, NpmDistTag},
     },
     errors::NpmError,
-    NpmPackage,
 };
 
 fn semver_sort_desc(a: &String, b: &String) -> Ordering {
@@ -54,7 +54,10 @@ impl NpmManager {
     }
 
     /// Returns all package versions in DESCENDING order.
-    pub async fn get_all_package_versions(&self, package: &NpmPackage) -> Result<Vec<String>, NpmError> {
+    pub async fn get_all_package_versions(
+        &self,
+        package: &NpmPackage,
+    ) -> Result<Vec<String>, NpmError> {
         let npm_package = self.get_package(package).await?;
         let mut versions: Vec<String> = npm_package.versions.into_keys().collect();
         // https://github.com/npm/cli/blob/32336f6efe06bd52de1dc67c0f812d4705533ef2/lib/commands/view.js#L54
