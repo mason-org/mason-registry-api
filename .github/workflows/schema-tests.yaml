@@ -14,6 +14,7 @@ jobs:
   schema-test:
     name: Run schema tests
     runs-on: ubuntu-latest
+    if: ${{ github.event_name != 'pull_request' || (github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'ci:skip-schema-tests')) }}
 
     steps:
       - uses: actions/checkout@v6
