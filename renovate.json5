@@ -1,15 +1,14 @@
 {
   automerge: true,
   platformAutomerge: true,
-  automergeType: "pr",
-  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  automergeType: 'pr',
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
   schedule: [
-    "on monday"
+    'on monday',
   ],
   extends: [
-    "config:base"
+    'config:recommended',
   ],
-  commitMessage: "bump({{depName}}): update to {{prettyNewVersion}}",
-  // Builds take a long time and we require branches to be up-to-date before merging.
+  commitMessage: 'bump({{depName}}): update to {{prettyNewVersion}}',
   prConcurrentLimit: 1,
 }
