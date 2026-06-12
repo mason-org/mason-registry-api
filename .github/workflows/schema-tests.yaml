@@ -30,5 +30,5 @@ jobs:
           npm install -g ajv ajv-cli ajv-formats
           ./tests/validate-schema.sh
         env:
-          GITHUB_API_KEY: ${{ secrets.API_KEY_GITHUB }}
+          GITHUB_API_KEY: ${{ secrets.PAT }}
           BASE_URL: ${{ steps.deploy.outputs.preview-url }}

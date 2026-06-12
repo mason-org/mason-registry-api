@@ -20,7 +20,7 @@ jobs:
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v8
         with:
-            token: ${{ secrets.API_KEY_GITHUB }}
+            token: ${{ secrets.PAT }}
             author: "William Botman <william+bot@redwill.se>"
             committer: "William Botman <william+bot@redwill.se>"
             add-paths: |
