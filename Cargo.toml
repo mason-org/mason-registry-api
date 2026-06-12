@@ -9,7 +9,7 @@ chrono = "0.4.38"
 crates_io_api = "0.12"
 http = "1"
 parse_link_header = "0.4.0"
-reqwest = { version = "0.12", features = ["json"] }
+reqwest = { version = "0.13", features = ["json"] }
 semver = "1.0.23"
 serde = { version = "1.0.203", features = ["derive"] }
 serde_json = "1.0.117"
