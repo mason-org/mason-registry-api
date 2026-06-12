@@ -7,8 +7,8 @@ on:
     - cron: 0 8 * * 1
 
 jobs:
-  schema-test:
-    name: Run schema tests
+  cargo-upgrade:
+    name: Cargo upgrade
     runs-on: ubuntu-latest
 
     steps:
@@ -18,13 +18,14 @@ jobs:
       - name: Run cargo upgrade
         run: cargo upgrade
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v4
+        uses: peter-evans/create-pull-request@v8
         with:
             token: ${{ secrets.API_KEY_GITHUB }}
             author: "William Botman <william+bot@redwill.se>"
             committer: "William Botman <william+bot@redwill.se>"
-            add-paths: Cargo.toml Cargo.lock
-            commit-message: "chore(deps): update deps"
-            title: "chore(deps): update deps"
-            branch: chore/update-deps
-            branch-suffix: short-commit-hash
+            add-paths: |
+              Cargo.toml
+              Cargo.lock
+            commit-message: "chore(deps): upgrade deps"
+            title: "chore(deps): upgrade deps"
+            branch: chore/upgrade-deps
