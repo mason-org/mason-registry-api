@@ -5,19 +5,19 @@ authors = ["William Boman <william@redwill.se>"]
 edition = "2024"
 
 [dependencies]
-chrono = "0.4.38"
+chrono = "0.4.45"
 crates_io_api = "0.12"
 http = "1"
-parse_link_header = "0.4.0"
+parse_link_header = "0.4.1"
 reqwest = { version = "0.12", features = ["json"] }
-semver = "1.0.23"
-serde = { version = "1.0.203", features = ["derive"] }
-serde_json = "1.0.117"
-thiserror = "2.0.0"
-tokio = { version = "1.38.0", features = ["macros"] }
-tracing = { version = "0.1.40", features = ["log"]}
-tracing-subscriber = { version = "0.3.18", default-features = false, features = ["fmt"] }
-url = "2.5.1"
+semver = "1.0.28"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.150"
+thiserror = "2.0.18"
+tokio = { version = "1.52.3", features = ["macros"] }
+tracing = { version = "0.1.44", features = ["log"]}
+tracing-subscriber = { version = "0.3.23", default-features = false, features = ["fmt"] }
+url = "2.5.8"
 vercel_runtime = "2.2.0"
 
 [lib]
