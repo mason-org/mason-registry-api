@@ -1,0 +1,30 @@
+---
+name: Cargo upgrade
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: 0 8 * * 1
+
+jobs:
+  schema-test:
+    name: Run schema tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install cargo-edit
+        run: cargo install cargo-edit
+      - name: Run cargo upgrade
+        run: cargo upgrade
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v4
+        with:
+            token: ${{ secrets.API_KEY_GITHUB }}
+            author: "William Botman <william+bot@redwill.se>"
+            committer: "William Botman <william+bot@redwill.se>"
+            add-paths: Cargo.toml Cargo.lock
+            commit-message: "chore(deps): update deps"
+            title: "chore(deps): update deps"
+            branch: chore/update-deps
+            branch-suffix: short-commit-hash
